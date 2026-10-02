@@ -1,0 +1,64 @@
+{
+  "case_id": "midea_fy2025_three_metrics",
+  "source_url": "https://static.cninfo.com.cn/finalpage/2026-03-31/1225058109.PDF",
+  "source_title": "美的集团股份有限公司2025年年度报告摘要",
+  "announced_date": "2026-03-31",
+  "retrieved_at": "2026-09-28T09:45:43.790546+00:00",
+  "source_sha256": "ead2a179260377a5545989f8d02c001ca09e2b42e4027df8fb5e9ac8539f1a6b",
+  "verification": "Numeric strings checked against PDF extraction; render also reviewed by analyst.",
+  "facts": [
+    {
+      "metric": "revenue",
+      "source_label": "营业收入",
+      "value_2025": 456451731,
+      "value_2024": 407149600,
+      "source_unit": "CNY_thousand",
+      "unit_to_CNY": 1000,
+      "value_2025_CNY_100million": "4564.51731",
+      "yoy_pct": "12.10909478972839467360400210",
+      "source_pdf_page_1based": 5,
+      "unit_pdf_page_1based": 4,
+      "scope": "consolidated",
+      "period_type": "annual",
+      "period_end": "2025-12-31",
+      "status": "actual"
+    },
+    {
+      "metric": "n_income_attr_p",
+      "source_label": "归属于上市公司股东的净利润",
+      "value_2025": 43945411,
+      "value_2024": 38537237,
+      "source_unit": "CNY_thousand",
+      "unit_to_CNY": 1000,
+      "value_2025_CNY_100million": "439.45411",
+      "yoy_pct": "14.03363193889587880937079120",
+      "source_pdf_page_1based": 5,
+      "unit_pdf_page_1based": 4,
+      "scope": "consolidated",
+      "period_type": "annual",
+      "period_end": "2025-12-31",
+      "status": "actual"
+    },
+    {
+      "metric": "n_cashflow_act",
+      "source_label": "经营活动产生的现金流量净额",
+      "value_2025": 53345930,
+      "value_2024": 60511572,
+      "source_unit": "CNY_thousand",
+      "unit_to_CNY": 1000,
+      "value_2025_CNY_100million": "533.4593",
+      "yoy_pct": "-11.84177135573341244547406569",
+      "source_pdf_page_1based": 5,
+      "unit_pdf_page_1based": 4,
+      "scope": "consolidated",
+      "period_type": "annual",
+      "period_end": "2025-12-31",
+      "status": "actual"
+    }
+  ],
+  "formula": "(value_2025 / value_2024 - 1) * 100",
+  "cashflow_to_parent_profit": {
+    "value": "1.213913552884964484687604810",
+    "warning": "Consolidated operating cash flow and profit attributable to parent use different ownership scopes; this is an auxiliary observation, not a same-scope cash conversion ratio."
+  }
+}

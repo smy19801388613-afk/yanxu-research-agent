@@ -1,0 +1,125 @@
+{
+  "endpoint": "https://api.tushare.pro",
+  "tested_at": "2026-09-28T09:45:50.385638+00:00",
+  "results": [
+    {
+      "api": "stock_basic",
+      "params": {
+        "ts_code": "000333.SZ"
+      },
+      "fields": "ts_code,name,exchange",
+      "http_status": 200,
+      "response": {
+        "request_id": "28041b54-a7f4-4fb9-9c89-fcb11c3711c7",
+        "code": 0,
+        "data": {
+          "fields": [
+            "ts_code",
+            "name",
+            "exchange"
+          ],
+          "items": [
+            [
+              "000333.SZ",
+              "美的集团",
+              "SZSE"
+            ]
+          ],
+          "has_more": false,
+          "count": 0
+        },
+        "msg": "",
+        "detail": "..."
+      },
+      "elapsed_s": 2.625
+    },
+    {
+      "api": "income",
+      "params": {
+        "ts_code": "000333.SZ",
+        "period": "20251231",
+        "report_type": "1"
+      },
+      "fields": "ts_code,ann_date,f_ann_date,end_date,report_type,revenue,total_revenue,n_income,n_income_attr_p,update_flag",
+      "http_status": 200,
+      "response": {
+        "request_id": "8aa85690-155e-4b6b-9586-08caf41ef412",
+        "code": 0,
+        "data": {
+          "fields": [
+            "ts_code",
+            "ann_date",
+            "f_ann_date",
+            "end_date",
+            "report_type",
+            "revenue",
+            "total_revenue",
+            "n_income",
+            "n_income_attr_p",
+            "update_flag"
+          ],
+          "items": [
+            [
+              "000333.SZ",
+              "20260331",
+              "20260331",
+              "20251231",
+              "1",
+              456451731000.0,
+              458502407000.0,
+              44520196000.0,
+              43945411000.0,
+              "1"
+            ]
+          ],
+          "has_more": false,
+          "count": 0
+        },
+        "msg": "",
+        "detail": "..."
+      },
+      "elapsed_s": 2.344
+    },
+    {
+      "api": "cashflow",
+      "params": {
+        "ts_code": "000333.SZ",
+        "period": "20251231",
+        "report_type": "1"
+      },
+      "fields": "ts_code,ann_date,f_ann_date,end_date,report_type,n_cashflow_act,update_flag",
+      "http_status": 200,
+      "response": {
+        "request_id": "35f26b5e-ccf8-44bc-96be-9443d7203267",
+        "code": 0,
+        "data": {
+          "fields": [
+            "ts_code",
+            "ann_date",
+            "f_ann_date",
+            "end_date",
+            "report_type",
+            "n_cashflow_act",
+            "update_flag"
+          ],
+          "items": [
+            [
+              "000333.SZ",
+              "20260331",
+              "20260331",
+              "20251231",
+              "1",
+              53345930000.0,
+              "1"
+            ]
+          ],
+          "has_more": false,
+          "count": 0
+        },
+        "msg": "",
+        "detail": "..."
+      },
+      "elapsed_s": 3.688
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+import {useEffect,useRef,useState} from 'react';
+import {ArrowUp,BookOpen,Check,ChevronDown,ChevronRight,FilePenLine,Layers3,LoaderCircle,MessageSquare,Plus,Search,SlidersHorizontal,Square,User,AlertCircle,Trash2,FileText,Globe2,Sparkles,ExternalLink} from 'lucide-react';
+import {api,post} from './api';
+import {ValuationResult,AssumptionChips} from './ValuationLab';
+import ResearchDocuments,{DocumentLinks} from './ResearchDocuments';
+import ResearchText from './ResearchText';
+const toolNames:any={search_company:'查找公司',start_research:'建立财务底稿',fetch_annual_report:'获取公开年报',attach_document:'接入研究材料',read_document:'查阅 PDF 原文',search_documents:'检索披露原文',web_search:'联网搜索',search_web:'联网搜索',read_webpage:'阅读网页',read_public_pdf:'查阅公开公告PDF',read_web_page:'阅读网页',read_web:'阅读网页',build_investment_memo:'撰写深度研究',refine_investment_memo:'依据原文修订报告',valuation_options:'比较估值方法',calculate_valuation:'计算估值情景',propose_valuation:'提出估值方案',calculate_proposal:'计算选定方案',revise_report:'修订研究报告'};
+const deepResearchPrompt='请围绕当前公司开展深度买方研究：联网搜索行业、竞争格局、最新经营进展与风险，阅读关键原文并结合财务底稿、年报，检验投资论点和反证，讨论估值适用条件、催化剂与判断失效条件，最后生成并保存完整研究备忘录。明确资料日期、来源、推断和未解决的问题；缺失数据不要编造。';
+function WebReferences({sources}:any){return <div className="web-references">{sources.filter((s:any)=>/^https?:\/\//i.test(s.url||'')).map((s:any,i:number)=><a href={s.url} target="_blank" rel="noopener noreferrer" key={s.id||s.url||i}><Globe2 size={15}/><span>{s.title||s.url}<small>{s.published_at||'日期未确认'}{s.read_status?' · '+(({read:'已读原文',article_text:'已读原文',public_pdf_text:'已读PDF原文',pdf_link_only:'PDF链接，未读正文',failed:'未取得正文',completed:'已读原文',body_read:'已读原文',snippet_only:'搜索摘要',search_snippet:'搜索摘要'} as any)[s.read_status]||'待查阅'):''}</small></span><ExternalLink size={12}/></a>)}</div>}
+function Step({step,onOpen,onAdopt,busy,accepted}:any){
+  const [open,setOpen]=useState(false),result=step.result;
+  return <div className={'agent-step '+step.state}>
+    <button className="step-toggle" aria-expanded={open} onClick={()=>setOpen(!open)}>{step.state==='running'?<LoaderCircle size={14} className="spin"/>:step.state==='completed'?<Check size={14}/>:<AlertCircle size={14}/>}<strong>{toolNames[step.tool]||step.tool}</strong><span>{step.message}</span>{open?<ChevronDown size={14}/>:<ChevronRight size={14}/>}</button>
+    {result?.artifact==='valuation'&&<div className="chat-artifact"><ValuationResult result={result.result} compact/><button className="text-link" onClick={()=>onOpen('model')}>查看假设与计算过程<ChevronRight size={14}/></button></div>}
+    {result?.artifact==='proposal'&&<div className="chat-artifact proposal-artifact"><div><strong>{result.proposal.method_name} · 待确认的探索方案</strong><span className="badge">{result.proposal.id}</span></div><AssumptionChips values={result.proposal.assumptions}/><p>{result.proposal.rationale}</p><button className="primary" disabled={busy||accepted} onClick={()=>onAdopt(result.proposal)}>{accepted?'已采用':'采用此方案并计算'}</button><small>也可以在对话中提出修改，再决定是否采用。</small></div>}
+    {result?.artifact==='report'&&<div className="chat-artifact report-artifact"><FilePenLine size={20}/><div><strong>报告已更新 · 第 {result.revision} 版</strong><p>{result.change_note}</p></div><button className="text-link" onClick={()=>onOpen('overview')}>查看报告</button></div>}
+    {result?.artifact==='research'&&<div className="chat-artifact report-artifact"><BookOpen size={20}/><div><strong>{result.company} · 财务底稿</strong><p>{result.fact_count} 项财务事实 · {result.state==='completed_with_gaps'?'已保存，含待核实项':result.state}</p></div><button className="text-link" onClick={()=>onOpen('overview')}>查看证据</button></div>}
+    {open&&result?.artifact==='document'&&<div className="chat-artifact report-artifact"><FileText size={20}/><div><strong>{result.document.title}</strong><p>{result.page_count} 页</p><a href={'/api/documents/'+result.document.id+'/file'} target="_blank" rel="noreferrer">打开 PDF 原文</a></div></div>}
+    {open&&result?.artifact==='document_search'&&<div className="chat-artifact document-citations"><strong>原文依据 · {result.snippets.length} 个片段</strong>{result.snippets.map((s:any,i:number)=><details key={i}><summary>{s.title} · 第 {s.page} 页{s.query?' · '+s.query:''}</summary><p>{s.text}</p><a href={s.url} target="_blank" rel="noreferrer">打开第 {s.page} 页</a></details>)}<small>{result.note}</small></div>}
+    {open&&['web_search','read_public_pdf'].includes(step.tool)&&<div className="chat-artifact"><WebReferences sources={result?.results||[]}/>{!!result?.errors?.length&&<p className="small-muted">{result.errors.map((item:any)=>typeof item==='string'?item:([item?.message,item?.error,item?.detail].find(value=>typeof value==='string')||'部分来源暂时无法访问')).join('；')}</p>}</div>}
+    {open&&['read_webpage','read_web_page'].includes(step.tool)&&result?.url&&<div className="chat-artifact"><WebReferences sources={[result]}/><p className="web-excerpt">{String(result.text||'').slice(0,1200)}</p></div>}
+    {result?.error&&<p className="step-error">{result.error}</p>}
+    {open&&result&&<details className="tool-raw"><summary>查看工具原始结果</summary><pre className="tool-result">{JSON.stringify(result,null,2)}</pre></details>}
+  </div>
+}
+export default function AgentChat({run,config,onRunUpdated,onOpen,onNewResearch,prompt,onPromptConsumed}:any){
+  const [chat,setChat]=useState<any>(null),[chats,setChats]=useState<any[]>([]),[draft,setDraft]=useState(''),[profile,setProfile]=useState(config.active_model||''),[sending,setSending]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+  const [attached,setAttached]=useState<any[]>([]),[historyNotice,setHistoryNotice]=useState(''),[showMaterials,setShowMaterials]=useState(false);
+  const chatRef=useRef<any>(null);
+  const bottom=useRef<HTMLDivElement>(null),textarea=useRef<HTMLTextAreaElement>(null),callback=useRef(onRunUpdated),openCallback=useRef(onOpen);
+  callback.current=onRunUpdated;openCallback.current=onOpen;
+  const active=chat?.state==='running';
+  const selectionKey='research-conversation:'+(run?.id||'free');
+  function remember(c:any){chatRef.current=c;localStorage.setItem(selectionKey,c.id);setChat(c)}
+  async function ensureChat(){if(chatRef.current)return chatRef.current;const c=await post('/conversations',{run_id:run?.id||null});remember(c);await list();return c}
+  async function documentsChanged(){const c=chatRef.current;if(!c)return;remember(await api('/conversations/'+c.id));setAttached(await api('/conversations/'+c.id+'/documents'));if(c.run_id)await callback.current(c.run_id)}
+  useEffect(()=>{let alive=true;setAttached([]);if(chat?.id)api('/conversations/'+chat.id+'/documents').then(rows=>alive&&setAttached(rows)).catch(e=>alive&&setError(e.message));return()=>{alive=false}},[chat?.id,chat?.updated_at]);
+  async function removeChat(){if(!chat||active)return;setError('');try{await api('/conversations/'+chat.id,{method:'DELETE'});localStorage.removeItem(selectionKey);chatRef.current=null;setChat(null);setAttached([]);const rows=await list();if(rows.length)remember(await api('/conversations/'+rows[0].id));setHistoryNotice('对话已移入回收站，可以恢复。')}catch(e:any){setError(e.message)}}
+  useEffect(()=>{setProfile(config.active_model||'')},[config.active_model]);
+  async function list(){const v=await api('/conversations'+(run?.id?'?run_id='+run.id:''));setChats(v);return v}
+  useEffect(()=>{let alive=true;api('/conversations'+(run?.id?'?run_id='+run.id:'')).then(async rows=>{if(!alive)return;setChats(rows);const saved=localStorage.getItem(selectionKey);const selected=rows.find((r:any)=>r.id===saved)||rows[0];if(selected){const c=await api('/conversations/'+selected.id);if(alive)remember(c)}}).catch(e=>alive&&setError(e.message)).finally(()=>alive&&setLoading(false));return()=>{alive=false}},[run?.id]);
+  useEffect(()=>{if(prompt){setDraft(prompt);textarea.current?.focus();onPromptConsumed?.()}},[prompt]);
+  useEffect(()=>{bottom.current?.scrollIntoView({behavior:'smooth',block:'end'})},[chat?.messages.length,chat?.steps.length,active]);
+  useEffect(()=>{
+    if(!chat?.id||!active)return;
+    const events=new EventSource('/api/conversations/'+chat.id+'/events');let done=false;
+    events.onmessage=e=>{const c=JSON.parse(e.data);chatRef.current=c;setChat(c);if(c.state!=='running'){done=true;events.close();list().catch(()=>{});if(c.run_id)callback.current(c.run_id)}};
+    events.onerror=()=>{events.close();if(!done){api('/conversations/'+chat.id).then(c=>{setChat(c);if(c.state==='running')setError('状态连接中断，任务仍在后台执行。刷新页面可恢复。');else if(c.run_id)callback.current(c.run_id)}).catch(e=>setError(e.message))}};
+    return()=>events.close();
+  },[chat?.id,active]);
+  async function newChat(unbound=false){setError('');try{const c=await post('/conversations',{run_id:unbound?null:run?.id||null});remember(c);setDraft('');await list()}catch(e:any){setError(e.message)}}
+  async function select(id:string){if(!id)return;setError('');try{remember(await api('/conversations/'+id))}catch(e:any){setError(e.message)}}
+  async function send(e?:any,content=draft){e?.preventDefault();if(!content.trim()||sending||active)return;setSending(true);setError('');try{
+    const c=await ensureChat();
+    const next=await post('/conversations/'+c.id+'/messages',{message:content,profile_id:profile||null});
+    remember(next);setDraft('');await list();
+  }catch(e:any){setError(e.message)}finally{setSending(false)}}
+  async function openArtifact(tab:string){if(chat?.run_id)await callback.current(chat.run_id);openCallback.current(tab)}
+  const linkedRun=chat&&!chat.run_id?null:run;
+  const contextName=linkedRun?linkedRun.company+' · '+linkedRun.request.year:'自由研究';
+  const messages=chat?.messages||[];
+  const webSources=Array.from(new Map((chat?.steps||[]).flatMap((s:any)=>s.tool==='web_search'?s.result?.results||[]:[]).map((s:any)=>[s.url,s])).values()).slice(-8);
+  const suggestions=linkedRun?[
+    ['深入研究并保存报告',deepResearchPrompt],
+    ['讨论研究思路','我更关心利润增长的可持续性。请先和我讨论该如何研究，有哪些反证和缺失资料。'],
+    ['一起选择估值方法','请比较 PE、DCF 和其他估值方法对当前公司的适用性，先不要直接给出估值。'],
+    ['改变报告关注点','请把研究报告改为以现金流风险为重点，保留反证和后续核实清单，并保存新版本。'],
+  ]:[
+    ['从一家公司开始','请研究美的集团 2025 年的收入、归母净利润和经营现金流，先找到公司并建立事实底稿。'],
+    ['讨论一个投资想法','我想研究家电行业，应该如何把一个投资想法拆成可验证的假设？'],
+    ['理解估值方法','帮我比较 PE、PB、DCF、EV/EBITDA 和 DDM 的适用条件。先不计算。'],
+  ];
+  return <div className="agent-page"><div className="agent-top"><div><h1>{linkedRun?linkedRun.company:'研究对话'}</h1></div><div className="button-row"><button className="secondary" disabled={active} onClick={()=>newChat(false)}><Plus size={15}/>新话题</button><button className="text-link" disabled={active} onClick={()=>newChat(true)}>自由研究</button><button className={'secondary materials-toggle '+(showMaterials?'selected':'')} aria-expanded={showMaterials} onClick={()=>setShowMaterials(!showMaterials)}><BookOpen size={15}/>研究资料</button></div></div>
+    <div className="chat-context"><span><Layers3 size={15}/>{contextName}</span><button onClick={onNewResearch}><Search size={14}/>选择公司</button><i/><label><span>模型</span><select aria-label="对话模型" disabled={active} value={profile} onChange={e=>setProfile(e.target.value)}>{config.profiles?.map((p:any)=><option key={p.id} value={p.id}>{p.name} · {p.model}</option>)}</select></label><button className="context-settings" aria-label="设置模型连接" onClick={()=>onOpen('settings')}><SlidersHorizontal size={14}/></button></div>
+    <div className={'chat-split '+(showMaterials?'materials-open':'')}><section className="conversation">
+      {!!chats.length&&<div className="conversation-selector"><MessageSquare size={13}/><select aria-label="历史研究对话" value={chat?.id||''} disabled={active} onChange={e=>select(e.target.value)}><option value="" disabled>选择对话</option>{chats.map(c=><option key={c.id} value={c.id}>{c.title} · {new Date(c.updated_at).toLocaleDateString('zh-CN')}</option>)}</select><button type="button" className="icon-button" title="删除当前对话，可从回收站恢复" aria-label="删除当前对话" disabled={active||sending} onClick={removeChat}><Trash2 size={14}/></button></div>}
+      {historyNotice&&<div className="history-notice" role="status">{historyNotice}<button className="text-link" onClick={()=>onOpen('trash')}>打开回收站</button></div>}
+      <div className="chat-messages" aria-live="polite">
+        {loading?<div className="chat-empty"><LoaderCircle className="spin"/></div>:!messages.length&&<div className="chat-empty"><span className="agent-symbol"><Layers3 size={28}/></span><h2>今天想研究什么？</h2><p>从一个判断开始，寻找证据，检验反证。</p><div className="chat-suggestions">{suggestions.map(([title,text])=><button key={title} onClick={()=>{setDraft(text);textarea.current?.focus()}}><span>{title}</span><ChevronRight size={15}/></button>)}</div></div>}
+        {messages.map((m:any,i:number)=>{const steps=m.role==='user'?(chat?.steps||[]).filter((s:any)=>s.turn_id===m.turn_id):[];return <div key={m.id} className={'chat-turn '+m.role}>
+          <div className="message-row"><span className="message-avatar">{m.role==='user'?<User size={15}/>:<Layers3 size={17}/>}</span><div className={'message-content '+(m.error?'error':'')}><div className="message-label">{m.role==='user'?'你':'研序'}<time>{new Date(m.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</time></div><ResearchText className="chat-prose" text={m.content}/></div></div>
+          {!!steps.length&&<details className="tool-timeline" open={active&&i===messages.length-1}><summary><ActivityIcon running={active&&i===messages.length-1}/><span>{active&&i===messages.length-1?'正在研究':'研究过程'} · {steps.length} 个步骤</span>{steps.some((s:any)=>s.result?.artifact==='proposal')&&<span className="badge">含估值方案</span>}<ChevronDown size={14}/></summary><div className="tool-timeline-items">{steps.map((s:any)=><Step key={s.id} step={s} onOpen={openArtifact} busy={active||sending} accepted={chat?.proposals?.find((p:any)=>p.id===s.result?.proposal?.id)?.state==='accepted'} onAdopt={(p:any)=>send(undefined,'我采用估值方案 '+p.id+'（'+p.method_name+'），请按展示的参数计算并保存。')}/>)}</div></details>}
+          {m.role==='user'&&i===messages.length-1&&active&&<div className="thinking-status"><LoaderCircle size={14} className="spin"/>{steps.at(-1)?.state==='running'?'正在执行工具…':'正在结合你的问题和工具结果继续研究…'}</div>}
+        </div>})}<div ref={bottom}/>
+      </div>
+      <form className="chat-composer" onSubmit={send}>{error&&<p className="form-error" role="alert">{error}</p>}<textarea ref={textarea} aria-label="与研序讨论研究" placeholder="提出问题，或继续追问你的投资判断…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}} maxLength={8000} disabled={sending}/>
+        <ResearchDocuments run={linkedRun} ensureChat={ensureChat} onDone={documentsChanged} disabled={active||sending}/>
+        <div className="composer-bottom"><span>Enter 发送 · Shift + Enter 换行</span>{active?<button type="button" className="secondary" onClick={()=>post('/conversations/'+chat.id+'/cancel').catch(e=>setError(e.message))}><Square size={13}/>停止</button>:<button className="send-button" aria-label="发送研究消息" disabled={sending||!draft.trim()||!profile}>{sending?<LoaderCircle className="spin" size={17}/>:<ArrowUp size={18}/>}</button>}</div></form>
+    </section><aside className="chat-companion"><h3>资料与成果</h3><button className="deep-research-action" onClick={()=>send(undefined,deepResearchPrompt)} disabled={!linkedRun||active||sending||!profile}><Sparkles size={18}/><span>深入研究并保存报告</span><ChevronRight size={14}/></button><button onClick={()=>onOpen('overview')} disabled={!linkedRun}><BookOpen size={18}/><span>公司研究<small>{linkedRun?linkedRun.facts.length+' 项事实 · 第 '+(linkedRun.report_revision||1)+' 版':'尚未建立研究'}</small></span><ChevronRight size={14}/></button><button onClick={()=>onOpen('model')} disabled={!linkedRun}><SlidersHorizontal size={18}/><span>估值与假设<small>{linkedRun?.valuation_history?.length||0} 份情景</small></span><ChevronRight size={14}/></button><DocumentLinks documents={attached}/>{!!webSources.length&&<div className="chat-web-sources"><h4>网络来源</h4><WebReferences sources={webSources}/></div>}</aside></div>
+  </div>
+}
+function ActivityIcon({running}:{running:boolean}){return running?<LoaderCircle size={14} className="spin"/>:<Check size={14}/>}

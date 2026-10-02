@@ -1,0 +1,97 @@
+{
+  "verified_at": "2026-09-29T03:02:54.998602+00:00",
+  "health": {
+    "status": "ok",
+    "service": "Research Desk",
+    "version": "0.1.0"
+  },
+  "run_id": "1a3ca7fa2e6d4d33",
+  "state": "completed_with_gaps",
+  "model": "completed",
+  "model_calls": 3,
+  "provider_reported_tokens": 9629,
+  "elapsed_ms": 40234,
+  "verified_facts": 6,
+  "calculations": [
+    {
+      "id": "yoy-revenue",
+      "metric": "revenue",
+      "label": "营业收入",
+      "kind": "yoy",
+      "unit": "%",
+      "formula": "(本期值 / 上期值 - 1) × 100",
+      "inputs": [
+        "revenue-2025",
+        "revenue-2024"
+      ],
+      "value": "12.10909478972839467360400210",
+      "change": "49302131000",
+      "reason": null
+    },
+    {
+      "id": "yoy-n_income_attr_p",
+      "metric": "n_income_attr_p",
+      "label": "归母净利润",
+      "kind": "yoy",
+      "unit": "%",
+      "formula": "(本期值 / 上期值 - 1) × 100",
+      "inputs": [
+        "n_income_attr_p-2025",
+        "n_income_attr_p-2024"
+      ],
+      "value": "14.03363193889587880937079120",
+      "change": "5408174000",
+      "reason": null
+    },
+    {
+      "id": "yoy-n_cashflow_act",
+      "metric": "n_cashflow_act",
+      "label": "经营现金流净额",
+      "kind": "yoy",
+      "unit": "%",
+      "formula": "(本期值 / 上期值 - 1) × 100",
+      "inputs": [
+        "n_cashflow_act-2025",
+        "n_cashflow_act-2024"
+      ],
+      "value": "-11.84177135573341244547406569",
+      "change": "-7165642000",
+      "reason": null
+    }
+  ],
+  "exports": {
+    "markdown": {
+      "bytes": 9164,
+      "file": "docs/demo-report.md"
+    },
+    "html": {
+      "bytes": 14130,
+      "file": "docs/demo-report.html"
+    },
+    "json": {
+      "bytes": 24809,
+      "file": "docs/demo-report.json"
+    },
+    "bundle": {
+      "bytes": 302209,
+      "file": "docs/demo-report.zip"
+    }
+  },
+  "browser_download_entries": [
+    "report.md",
+    "run.json",
+    "snapshots/cashflow-2024.json",
+    "snapshots/cashflow-2025.json",
+    "snapshots/document-pages.json",
+    "snapshots/income-2024.json",
+    "snapshots/income-2025.json",
+    "snapshots/model-draft.json",
+    "snapshots/model-repaired.json",
+    "snapshots/model-review.json",
+    "snapshots/plan.json",
+    "snapshots/research-snippets.json",
+    "snapshots/security.json",
+    "source.pdf"
+  ],
+  "credentials_in_exports": false
+}

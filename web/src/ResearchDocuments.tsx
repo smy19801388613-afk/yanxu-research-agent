@@ -1,0 +1,28 @@
+import {useEffect,useRef,useState} from 'react';
+import {Upload,FolderOpen,Download,LoaderCircle,X,FileText,ExternalLink} from 'lucide-react';
+import {api,post} from './api';
+import CompanySearch from './CompanySearch';
+
+export default function ResearchDocuments({run,ensureChat,onDone,disabled}:any){
+  const [mode,setMode]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[docs,setDocs]=useState<any[]>([]),[file,setFile]=useState<File|null>(null);
+  const [meta,setMeta]=useState({ticker:run?.request.ticker||'',year:run?.request.year||new Date().getFullYear()-1,announced_date:''});
+  const input=useRef<HTMLInputElement>(null);
+  useEffect(()=>{setMeta({ticker:run?.request.ticker||'',year:run?.request.year||new Date().getFullYear()-1,announced_date:''})},[run?.id]);
+  async function open(next:string){setError('');setNotice('');setFile(null);setMode(next);if(next==='library')try{setDocs(await api('/documents'))}catch(e:any){setError(e.message)}}
+  async function finish(doc:any){await onDone();setMode('');setNotice(doc.index_status==='needs_ocr'?'文件已接入；查阅扫描页时会使用本机 OCR，结果需核对原图。':'已接入对话，可以直接提问；回答会引用 PDF 页码。')}
+  async function upload(){if(!file)return;setBusy(true);setError('');try{const c=await ensureChat();const body=new FormData();body.append('file',file);body.append('ticker',meta.ticker);body.append('year',String(meta.year));body.append('conversation_id',c.id);if(meta.announced_date)body.append('announced_date',meta.announced_date);const doc=await api('/documents',{method:'POST',body});await finish(doc)}catch(e:any){setError(e.message)}finally{setBusy(false)}}
+  async function attach(doc:any){setBusy(true);setError('');try{const c=await ensureChat();await post('/conversations/'+c.id+'/documents/'+doc.id);await finish(doc)}catch(e:any){setError(e.message)}finally{setBusy(false)}}
+  async function find(){setBusy(true);setError('');try{const c=await ensureChat();const r=await post('/conversations/'+c.id+'/annual-report',{ticker:meta.ticker,year:Number(meta.year),as_of:run?.request.as_of||new Date().toLocaleDateString('en-CA')});await finish(r.document)}catch(e:any){setError(e.message)}finally{setBusy(false)}}
+  return <><div className="document-actions"><button type="button" disabled={disabled||busy} onClick={()=>open('upload')}><Upload size={14}/>上传 PDF</button><button type="button" disabled={disabled||busy} onClick={()=>open('library')}><FolderOpen size={14}/>接入资料</button><button type="button" disabled={disabled||busy} onClick={()=>open('find')}><Download size={14}/>查找年报</button>{notice&&<span role="status">{notice}</span>}</div>
+    {mode&&<div className="modal-backdrop"><section className="modal document-dialog" role="dialog" aria-modal="true" aria-label={mode==='upload'?'上传并查阅 PDF':mode==='find'?'查找公开年报':'接入已有资料'}><header><h2>{mode==='upload'?'上传并查阅 PDF':mode==='find'?'查找公开年报':'接入已有资料'}</h2><button type="button" className="icon-button" aria-label="关闭材料窗口" disabled={busy} onClick={()=>setMode('')}><X size={19}/></button></header>
+    {mode==='library'?<><p className="small-muted">选择资料后即可在当前对话查阅，不需要重建研究。</p><div className="attach-library">{docs.filter(d=>!run||(d.ticker===run.request.ticker&&d.year===run.request.year)).map(d=><div key={d.id}><FileText size={18}/><span><strong>{d.title}</strong><small>{d.ticker} · {d.year} 年 · {d.page_count||'待索引'} 页</small></span><button type="button" className="secondary" disabled={busy} onClick={()=>attach(d)}>接入</button></div>)}{!docs.some(d=>!run||(d.ticker===run.request.ticker&&d.year===run.request.year))&&<p>没有匹配当前公司和年度的材料。可以上传 PDF 或查找公开年报。</p>}</div></>:<>
+      <p className="small-muted">{mode==='upload'?'上传后立即接入当前对话并提取全文。支持文本 PDF，最多 100 MB / 800 页；扫描页使用 Windows 本机中文 OCR，识别结果需核对原图。':'从巨潮资讯查找匹配公司、年度、截止日的年报全文，下载并接入当前对话。无需 Tushare Token。'}</p>
+      <CompanySearch value={meta.ticker} disabled={!!run||busy} onChange={(ticker:string)=>setMeta({...meta,ticker})}/><label>报告年度<input type="number" aria-label="材料报告年度" disabled={!!run||busy} min="2000" max={new Date().getFullYear()} value={meta.year} onChange={e=>setMeta({...meta,year:Number(e.target.value)})}/></label>
+      {mode==='upload'?<><label>公告日期（可留空）<input type="date" max={run?.request.as_of||new Date().toLocaleDateString('en-CA')} value={meta.announced_date} disabled={busy} onChange={e=>setMeta({...meta,announced_date:e.target.value})}/><small>未知日期的材料可查阅，但不会被当作已满足历史截止日的核验事实。</small></label><input type="file" accept="application/pdf,.pdf" ref={input} aria-label="选择研究 PDF" disabled={busy} onChange={e=>setFile(e.target.files?.[0]||null)}/><button type="button" className="primary full" disabled={busy||!file||!meta.ticker} onClick={upload}>{busy?<LoaderCircle className="spin" size={16}/>:<Upload size={16}/>}上传并接入当前对话</button></>:<><p className="small-muted">研究截止日：{run?.request.as_of||new Date().toLocaleDateString('en-CA')}。不以摘要或半年报替代全文。</p><button type="button" className="primary full" disabled={busy||!meta.ticker} onClick={find}>{busy?<LoaderCircle className="spin" size={16}/>:<Download size={16}/>}查找并接入年报全文</button></>}
+    </>}{busy&&<p className="small-muted" role="status">正在保存并提取全文，较大的年报可能需要数十秒…</p>}{error&&<p className="form-error" role="alert">{error}</p>}</section></div>}
+  </>
+}
+
+export function DocumentLinks({documents}:any){
+  return <div className="attached-documents"><h4>已接入材料 · {documents.length}</h4>{documents.length?documents.map((d:any)=><a key={d.id} href={'/api/documents/'+d.id+'/file'} target="_blank" rel="noreferrer"><FileText size={16}/><span>{d.title}<small>{d.page_count||'已接入'}{d.page_count?' 页':''} · {d.index_status==='needs_ocr'?'按页 OCR':d.kind==='public_report'?'公开披露':'本地材料'}</small></span><ExternalLink size={12}/></a>):<p>在输入框下方上传 PDF、接入资料，或让 Agent 查找年报。</p>}</div>
+}

@@ -1,0 +1,327 @@
+import asyncio
+import hashlib
+import html
+import io
+import json
+import re
+import subprocess
+import sys
+import uuid
+import zipfile
+from datetime import date
+from pathlib import Path
+from contextlib import asynccontextmanager
+from urllib.parse import urlparse
+from fastapi import FastAPI,HTTPException,UploadFile,File,Form,Request
+from fastapi.responses import FileResponse,Response,StreamingResponse,JSONResponse
+from fastapi.staticfiles import StaticFiles
+import pdfplumber
+import pypdfium2
+from .config import ROOT,DATA,VERSION,settings
+from . import store,documents,connections,securities,valuation,disclosures
+from .schemas import RunRequest,ScenarioRequest,ReviewRequest,ProfileRequest,PreferencesRequest,ValuationRequest,ConversationRequest,TurnRequest,ReportRequest
+from .providers import ProviderError,model_json,list_models
+from .finance import scenario,audit_text
+from .exporting import markdown,printable
+
+@asynccontextmanager
+async def lifespan(app):
+    store.connection().close()
+    documents.seed()
+    yield
+
+app=FastAPI(title="研序 · 对话投研 Agent",version=VERSION,lifespan=lifespan)
+
+@app.middleware("http")
+async def local_origin(request:Request,call_next):
+    if request.method not in ("GET","HEAD","OPTIONS"):
+        origin=request.headers.get("origin")
+        if origin and urlparse(origin).hostname not in ("127.0.0.1","localhost"):
+            return JSONResponse({"detail":"只接受本机工作台发起的操作"},status_code=403)
+    return await call_next(request)
+
+@app.exception_handler(KeyError)
+async def not_found(request,error):
+    return JSONResponse({"detail":"未找到该研究任务或材料"},status_code=404)
+
+@app.exception_handler(ValueError)
+async def bad_request(request,error):
+    return JSONResponse({"detail":str(error)},status_code=400)
+
+@app.exception_handler(ProviderError)
+async def provider_error(request,error):
+    return JSONResponse({"detail":str(error)},status_code=502)
+
+def launch(run):
+    folder=DATA/"runs"/run["id"]
+    folder.mkdir(parents=True,exist_ok=True)
+    with (folder/"worker.log").open("ab") as log:
+        process=subprocess.Popen([sys.executable,"-u","-m","app.worker",run["id"]],cwd=ROOT,stdout=log,stderr=log,
+            creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0))
+    (folder/"worker.pid").write_text(str(process.pid),encoding="ascii")
+    return run
+
+@app.get("/api/health")
+def health():
+    return {"status":"ok","service":"Research Desk","version":VERSION}
+
+@app.get("/api/settings")
+def configuration():
+    return connections.public_settings()
+
+@app.post("/api/connections/profiles")
+def profile(request:ProfileRequest):
+    return connections.save_profile(request.model_dump())
+
+@app.post("/api/connections/preferences")
+def preferences(request:PreferencesRequest):
+    return connections.save_preferences(request.model_dump())
+
+@app.post("/api/connections/{profile_id}/test")
+def test_model(profile_id:str):
+    value,meta=model_json('Return JSON {"connected":true}.',{"purpose":"connection_test"},120,profile_id=profile_id)
+    if value.get("connected") is not True: raise ProviderError("接口返回成功，但未通过 JSON 输出测试")
+    return {"status":"connected","detail":"已完成一次真实模型调用","meta":meta}
+
+@app.get("/api/connections/{profile_id}/models")
+def models(profile_id:str): return list_models(profile_id)
+
+@app.get("/api/securities")
+def securities_search(q:str=""):
+    if len(q)>80: raise ValueError("搜索词过长")
+    return securities.search(q)
+
+@app.post("/api/securities/refresh")
+def securities_refresh():
+    result=securities.search("",refresh=True)
+    return result
+
+@app.get("/api/runs")
+def runs(): return store.list_runs()
+
+@app.delete("/api/runs/{run_id}")
+def delete_run(run_id:str): return store.trash_item("run",run_id)
+
+@app.delete("/api/conversations/{cid}")
+def delete_conversation(cid:str): return store.trash_item("conversation",cid)
+
+@app.get("/api/trash")
+def trash(): return store.list_trash()
+
+@app.post("/api/trash/{kind}/{identity}/restore")
+def restore(kind:str,identity:str): return store.restore_item(kind,identity)
+
+@app.post("/api/runs",status_code=202)
+def create(request:RunRequest):
+    if request.document_id: store.get_document(request.document_id)
+    payload=request.model_dump(mode="json");config=connections.load()
+    if payload["data_source"]=="default": payload["data_source"]=config["data_source"]
+    payload["model_profile"]=payload["model_profile"] or config["active_model"]
+    connections.resolve_model(payload["model_profile"])
+    return launch(store.create_run(payload))
+
+@app.get("/api/runs/{run_id}/valuation-options")
+def valuation_options(run_id:str): return valuation.options(store.get_run(run_id))
+
+@app.post("/api/runs/{run_id}/valuations")
+def calculate_valuation(run_id:str,request:ValuationRequest):
+    return valuation.save_result(run_id,request.method,request.assumptions)
+
+@app.get("/api/conversations")
+def conversation_list(run_id:str|None=None): return store.conversations(run_id)
+
+@app.post("/api/conversations",status_code=201)
+def conversation_create(request:ConversationRequest): return store.new_conversation(request.run_id)
+
+@app.get("/api/conversations/{cid}")
+def conversation_get(cid:str): return store.get_conversation(cid)
+
+@app.get("/api/conversations/{cid}/documents")
+def conversation_documents(cid:str):
+    return [documents.public_document(d) for d in documents.attached_documents(store.get_conversation(cid))]
+
+@app.post("/api/conversations/{cid}/documents/{doc_id}")
+def attach_document(cid:str,doc_id:str): return documents.attach(cid,doc_id)
+
+@app.post("/api/conversations/{cid}/annual-report")
+def fetch_report(cid:str,request:ReportRequest):
+    chat=store.get_conversation(cid)
+    if chat["state"]=="running": raise ValueError("请等待当前回复结束后再接入材料")
+    if chat.get("run_id"):
+        req=store.get_run(chat["run_id"])["request"]
+        if request.ticker!=req["ticker"] or request.year!=req["year"] or request.as_of.isoformat()!=req["as_of"]:
+            raise ValueError("公司、年度或截止日与当前研究不一致")
+    doc=disclosures.fetch_annual(request.ticker,request.year,request.as_of.isoformat())
+    return documents.attach(cid,doc["id"])
+
+@app.post("/api/conversations/{cid}/messages",status_code=202)
+def conversation_turn(cid:str,request:TurnRequest):
+    if not request.message.strip(): raise ValueError("请输入研究问题")
+    profile=connections.resolve_model(request.profile_id)
+    if not profile["model"] or (not profile["key"] and profile["provider"]!="ollama"):
+        raise ValueError("请在连接设置中配置当前模型")
+    config=connections.load()
+    chat=store.begin_turn(cid,request.message.strip(),profile["id"],config["data_source"])
+    folder=DATA/"conversations"/cid;folder.mkdir(parents=True,exist_ok=True)
+    try:
+        with (folder/"worker.log").open("ab") as log:
+            process=subprocess.Popen([sys.executable,"-u","-m","app.agent_worker",cid],cwd=ROOT,stdout=log,stderr=log,
+                                     creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0))
+        (folder/"worker.pid").write_text(str(process.pid),encoding="ascii")
+    except Exception:
+        from .agent import finish_error
+        finish_error(cid,chat["turn_id"],"无法启动本地 Agent 进程，请重试","failed")
+        raise ValueError("无法启动本地 Agent 进程") from None
+    return chat
+
+@app.post("/api/conversations/{cid}/cancel")
+def conversation_cancel(cid:str):
+    store.cancel_conversation(cid)
+    chat=store.get_conversation(cid)
+    if chat.get("run_id"):
+        run=store.get_run(chat["run_id"])
+        if run["state"] in ("queued","running"): store.cancel_run(run["id"])
+    return {"status":"requested","detail":"停止请求已记录，当前外部请求返回后生效"}
+
+@app.get("/api/conversations/{cid}/events")
+async def conversation_events(cid:str):
+    store.get_conversation(cid)
+    async def generate():
+        last=None
+        while True:
+            value=store.get_conversation(cid)
+            if value["updated_at"]!=last:
+                last=value["updated_at"]
+                yield "data: "+json.dumps(value,ensure_ascii=False)+"\n\n"
+            if value["state"]!="running": break
+            await asyncio.sleep(.7)
+    return StreamingResponse(generate(),media_type="text/event-stream",headers={"Cache-Control":"no-cache"})
+
+@app.get("/api/runs/{run_id}")
+def get(run_id:str): return store.get_run(run_id)
+
+@app.post("/api/runs/{run_id}/retry",status_code=202)
+def retry(run_id:str):
+    old=store.get_run(run_id)
+    if old["state"] in ("queued","running"): raise ValueError("请先等待或取消当前任务")
+    return launch(store.create_run(old["request"],parent=run_id))
+
+@app.post("/api/runs/{run_id}/cancel")
+def cancel(run_id:str):
+    run=store.get_run(run_id)
+    if run["state"] in ("queued","running"):
+        store.cancel_run(run_id)
+        run["state"]="cancelled"
+        store.save_run(run)
+    return {"status":"cancelled","detail":"取消请求已记录；正在进行的外部调用会在返回后停止"}
+
+@app.get("/api/runs/{run_id}/events")
+async def events(run_id:str):
+    store.get_run(run_id)
+    async def generate():
+        last=None
+        while True:
+            run=store.get_run(run_id)
+            if run["updated_at"]!=last:
+                last=run["updated_at"]
+                yield "data: "+json.dumps(run,ensure_ascii=False)+"\n\n"
+            if run["state"] not in ("queued","running"): break
+            await asyncio.sleep(1)
+    return StreamingResponse(generate(),media_type="text/event-stream",headers={"Cache-Control":"no-cache"})
+
+@app.post("/api/runs/{run_id}/scenario")
+def calculate_scenario(run_id:str,request:ScenarioRequest):
+    run=store.get_run(run_id)
+    if run["state"] in ("queued","running"): raise ValueError("请等待财务核对完成后调整情景")
+    fact=next((f for f in run["facts"] if f["metric"]=="n_income_attr_p" and f["year"]==run["request"]["year"]),None)
+    if not fact or fact["status"]=="conflict": raise ValueError("缺少无冲突的归母净利润，暂不能计算 PE 情景")
+    output=scenario(fact["value"],request.growth_pct,request.pe,request.shares_100m)
+    result={"inputs":request.model_dump(),"output":output,"base_fact_id":fact["id"],"forecast_year":run["request"]["year"]+1,"created_at":store.now()}
+    run["scenario_history"].append(result)
+    run["scenario_history"]=run["scenario_history"][-30:]
+    store.save_run(run)
+    return result
+
+@app.post("/api/runs/{run_id}/review")
+def review(run_id:str,request:ReviewRequest):
+    run=store.get_run(run_id)
+    if not run["facts"]: raise ValueError("当前任务没有财务事实可用于核查")
+    issues=audit_text(request.text,run["facts"],run["calculations"],run["request"]["year"])
+    return {"issues":issues,"scope":"仅检查本期核心三项指标的金额、现金流增长方向、部分大小关系和过强结论；不代表全文已核验。",
+        "status":"issues_found" if issues else "no_rule_hits"}
+
+@app.get("/api/runs/{run_id}/compare/{previous_id}")
+def compare(run_id:str,previous_id:str):
+    current=store.get_run(run_id);previous=store.get_run(previous_id)
+    if current["request"]["ticker"]!=previous["request"]["ticker"]: raise ValueError("版本对比需要相同公司")
+    old={f["id"]:f for f in previous["facts"]};new={f["id"]:f for f in current["facts"]}
+    changes=[]
+    for key in sorted(set(old)|set(new)):
+        a=old.get(key);b=new.get(key)
+        if not a or not b or a["value"]!=b["value"] or a["status"]!=b["status"]:
+            changes.append({"id":key,"before":a,"after":b})
+    return {"changes":changes,"memo_changed":current.get("memo")!=previous.get("memo"),
+        "note":"比较保存的研究快照；不代表自动发现了新公告"}
+
+@app.get("/api/runs/{run_id}/export")
+def export(run_id:str,format:str="markdown",preview:bool=False):
+    run=store.get_run(run_id);stem=f"research-{run_id}"
+    if format=="json":
+        return Response(json.dumps(run,ensure_ascii=False,indent=2),media_type="application/json",headers={"Content-Disposition":f'attachment; filename="{stem}.json"'})
+    if format=="markdown":
+        return Response(markdown(run),media_type="text/markdown; charset=utf-8",headers={"Content-Disposition":f'attachment; filename="{stem}.md"'})
+    if format=="html":
+        disposition="inline" if preview else "attachment"
+        return Response(printable(run),media_type="text/html",headers={"Content-Disposition":f'{disposition}; filename="{stem}.html"'})
+    if format=="bundle":
+        stream=io.BytesIO()
+        with zipfile.ZipFile(stream,"w",zipfile.ZIP_DEFLATED) as z:
+            z.writestr("report.md",markdown(run));z.writestr("run.json",json.dumps(run,ensure_ascii=False,indent=2))
+            for f in (DATA/"runs"/run_id).glob("*.json"): z.write(f,"snapshots/"+f.name)
+            if run.get("document_id"):
+                doc=store.get_document(run["document_id"]);z.write(doc["path"],"source.pdf")
+            for doc_id in run.get("document_ids",[]):
+                if doc_id==run.get("document_id"): continue
+                doc=store.get_document(doc_id);z.write(doc["path"],"documents/"+doc_id+".pdf")
+        return Response(stream.getvalue(),media_type="application/zip",headers={"Content-Disposition":f'attachment; filename="{stem}.zip"'})
+    raise ValueError("不支持该导出格式")
+
+@app.get("/api/documents")
+def list_docs():
+    return [documents.public_document(d) for d in store.list_documents()]
+
+@app.post("/api/documents")
+def upload(file:UploadFile=File(...),ticker:str=Form(...),year:int=Form(...),announced_date:str|None=Form(None),conversation_id:str|None=Form(None)):
+    if conversation_id:
+        chat=store.get_conversation(conversation_id)
+        if chat["state"]=="running": raise ValueError("请等待当前回复结束再上传材料")
+        if chat.get("run_id"):
+            req=store.get_run(chat["run_id"])["request"]
+            if ticker!=req["ticker"] or year!=req["year"]: raise ValueError("材料公司或年度与当前研究不一致")
+            if announced_date and announced_date>req["as_of"]: raise ValueError("公告日期晚于当前研究截止日")
+    content=file.file.read(documents.MAX_BYTES+1)
+    doc=documents.register_pdf(content,ticker,year,file.filename or "上传报告.pdf",announced_date or None)
+    if conversation_id: documents.attach(conversation_id,doc["id"])
+    return documents.public_document(doc)
+
+@app.get("/api/documents/{doc_id}/file")
+def source(doc_id:str):
+    return FileResponse(store.get_document(doc_id)["path"],media_type="application/pdf")
+
+@app.get("/api/documents/{doc_id}/pages/{page}")
+def page_image(doc_id:str,page:int):
+    doc=store.get_document(doc_id);folder=DATA/"page-images";folder.mkdir(exist_ok=True)
+    output=folder/f"{doc_id}-{page}.png"
+    if not output.exists():
+        with documents.PDF_LOCK, pypdfium2.PdfDocument(doc["path"]) as pdf:
+            if not 1<=page<=len(pdf): raise HTTPException(404,"页码不存在")
+            pdf_page=pdf[page-1]
+            try:
+                bitmap=pdf_page.render(scale=1.4)
+                try: bitmap.to_pil().save(output)
+                finally: bitmap.close()
+            finally: pdf_page.close()
+    return FileResponse(output,media_type="image/png")
+
+dist=ROOT/"web"/"dist"
+app.mount("/",StaticFiles(directory=dist,html=True,check_dir=False),name="web")

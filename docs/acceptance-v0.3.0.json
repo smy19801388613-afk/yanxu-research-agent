@@ -1,0 +1,61 @@
+{
+  "version": "0.3.0",
+  "date": "2026-10-02",
+  "run_id": "013b9220057f4337",
+  "chat_id": "62be84487ae44ab0",
+  "revision": 7,
+  "report_origin": "model_revision_5_followed_by_explicit_development_acceptance_review_revisions_6_7",
+  "sections": 7,
+  "cited_records": 39,
+  "valuations_preserved": [
+    "5f6972b2cf05",
+    "7ef9ff9e4158",
+    "b25ff034b11e"
+  ],
+  "checks": {
+    "frontend_build": "passed",
+    "pip_check": "passed",
+    "exports": [
+      "html",
+      "markdown",
+      "json",
+      "bundle"
+    ],
+    "browser_source_panel": "passed",
+    "browser_console_errors": 0,
+    "pytest": {
+      "passed": 164,
+      "warnings": 1,
+      "seconds": 20.98
+    }
+  },
+  "semantic_review": {
+    "citation_validation": "passed",
+    "revision_performed": true,
+    "issues": [],
+    "strengths": [
+      "收入重述、同期现金流、两期减值差额和PS日期口径已在开发验收中对照原文复算"
+    ],
+    "semantic_status": "模型第5版经代码助手开发验收复核后保存本版：修正费用四舍五入、当期与同比减值贡献、冻结资金及过时待办。本次不是自动研究链路的再次反方审阅，亦不代表全部数字和判断经过独立专业核验。 最终复核补充对齐官方分部数据、公司现金流解释与应收存货比较期间；模型原稿仍可在历史版本查看。",
+    "acceptance_review": {
+      "fee_reduction": "219819871.55",
+      "impairment_reduction": "25562856.90",
+      "attributable_net_profit_change": "319555452.37",
+      "impairment_relative_scale_percent": "7.999505785431515214424629409",
+      "h1_current_impairment_net_effect": "4138573.41",
+      "h1_previous_impairment_net_effect": "-5287450.16",
+      "h1_impairment_yoy_change": "9426023.57",
+      "sources": [
+        "public-web-d9d6179f4443",
+        "public-web-e9c8552c931c",
+        "public-web-1ab4830f0b71",
+        "pdf-938a6a606c3f4bd2-p172"
+      ],
+      "additional_sources": [
+        "public-web-22c446f63f62",
+        "public-web-4458c318f13d",
+        "pdf-938a6a606c3f4bd2-p20"
+      ]
+    }
+  }
+}

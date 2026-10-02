@@ -1,0 +1,193 @@
+{
+  "run_id": "7e281ca07b7e4ddc",
+  "date": "2026-09-30",
+  "version": "0.2.0",
+  "tests_passed": 55,
+  "verified_facts": 6,
+  "report_revision": 2,
+  "report_history": 1,
+  "data_source": "eastmoney",
+  "conversations": [
+    {
+      "id": "c357848968694362",
+      "state": "idle",
+      "messages": 8,
+      "steps": [
+        {
+          "tool": "propose_valuation",
+          "state": "completed"
+        },
+        {
+          "tool": "calculate_proposal",
+          "state": "completed"
+        }
+      ]
+    },
+    {
+      "id": "a905b6c5f5ed42f4",
+      "state": "idle",
+      "messages": 12,
+      "steps": [
+        {
+          "tool": "calculate_valuation",
+          "state": "completed"
+        },
+        {
+          "tool": "calculate_valuation",
+          "state": "failed"
+        },
+        {
+          "tool": "calculate_valuation",
+          "state": "completed"
+        },
+        {
+          "tool": "revise_report",
+          "state": "completed"
+        }
+      ]
+    }
+  ],
+  "valuation_results": [
+    {
+      "id": "ad703ba2a6d4",
+      "method": "pe",
+      "method_name": "PE · 市盈率",
+      "created_at": "2026-09-29T16:35:36.600552+00:00",
+      "assumptions": {
+        "growth_pct": "10",
+        "multiple": "15"
+      },
+      "assumption_quotes": {
+        "growth_pct": "下一年增长 10%",
+        "multiple": "PE 15 倍"
+      },
+      "origin": "conversation",
+      "fact_ids": [
+        "n_income_attr_p-2025"
+      ],
+      "formula": "下一期归母净利润 × PE",
+      "output": {
+        "equity_value_100m": "7250.992815",
+        "enterprise_value_100m": null,
+        "price": null,
+        "base_100m": "439.45411",
+        "forecast_100m": "483.399521"
+      },
+      "notes": [
+        "未提供摊薄股本，不计算每股价值。",
+        "情景计算是输入假设的结果，并非投资评级或市场报价。"
+      ]
+    },
+    {
+      "id": "8e650419f97f",
+      "method": "pe",
+      "method_name": "PE · 市盈率",
+      "created_at": "2026-09-30T00:41:39.596331+00:00",
+      "assumptions": {
+        "growth_pct": "10",
+        "multiple": "12"
+      },
+      "assumption_quotes": {
+        "growth_pct": "下一年增长 10%",
+        "multiple": "PE 改成 12"
+      },
+      "origin": "conversation",
+      "fact_ids": [
+        "n_income_attr_p-2025"
+      ],
+      "formula": "下一期归母净利润 × PE",
+      "output": {
+        "equity_value_100m": "5800.794252",
+        "enterprise_value_100m": null,
+        "price": null,
+        "base_100m": "439.45411",
+        "forecast_100m": "483.399521"
+      },
+      "notes": [
+        "未提供摊薄股本，不计算每股价值。",
+        "情景计算是输入假设的结果，并非投资评级或市场报价。"
+      ],
+      "comparison": {
+        "previous_id": "ad703ba2a6d4",
+        "output_changes": {
+          "equity_value_100m": {
+            "before": "7250.992815",
+            "after": "5800.794252",
+            "delta": "-1450.198563",
+            "delta_pct": "-20.0"
+          }
+        },
+        "changed_assumptions": {
+          "multiple": {
+            "before": "15",
+            "after": "12"
+          }
+        }
+      }
+    },
+    {
+      "id": "cb05abb6e22d",
+      "method": "dcf",
+      "method_name": "DCF · 企业自由现金流",
+      "created_at": "2026-09-30T01:13:54.652661+00:00",
+      "assumptions": {
+        "base_fcff_100m": "300",
+        "growth_pct": "5",
+        "years": "5",
+        "wacc_pct": "9",
+        "terminal_growth_pct": "2"
+      },
+      "assumption_quotes": {
+        "approval": "我采用估值方案 7f35a4e9（DCF · 企业自由现金流），请按展示的参数计算并保存。",
+        "proposal_id": "7f35a4e9"
+      },
+      "origin": "accepted_proposal",
+      "fact_ids": [],
+      "formula": "预测期 FCFF 现值 + 终值现值 − 股权桥接扣减项",
+      "output": {
+        "equity_value_100m": null,
+        "enterprise_value_100m": "4968.803457987809858191620958",
+        "price": null,
+        "forecast_pv_100m": "1342.723368871682708779331511",
+        "terminal_pv_100m": "3626.080089116127149412289447",
+        "terminal_weight_pct": "72.97692733824818434471109712",
+        "rows": [
+          {
+            "year": 2026,
+            "fcff_100m": "315.00",
+            "present_value_100m": "288.9908256880733944954128440"
+          },
+          {
+            "year": 2027,
+            "fcff_100m": "330.7500",
+            "present_value_100m": "278.3856577729147378166820975"
+          },
+          {
+            "year": 2028,
+            "fcff_100m": "347.287500",
+            "present_value_100m": "268.1696703317068575298313783"
+          },
+          {
+            "year": 2029,
+            "fcff_100m": "364.65187500",
+            "present_value_100m": "258.3285815121946792718559149"
+          },
+          {
+            "year": 2030,
+            "fcff_100m": "382.8844687500",
+            "present_value_100m": "248.8486335667930396655492758"
+          }
+        ]
+      },
+      "notes": [
+        "FCFF 为用户假设；需核验 EBIT、税率、折旧、资本支出与营运资本。",
+        "未提供净债务等桥接扣减项，仅报告企业价值，暂不计算股权价值或每股价值。",
+        "桥接扣减项 = 净债务 + 少数股东权益 + 优先股 − 其他非经营性资产；负值表示净加回。",
+        "情景计算是输入假设的结果，并非投资评级或市场报价。"
+      ]
+    }
+  ],
+  "model_calls": 24,
+  "reported_total_tokens": 149051,
+  "catalog_count": 5571
+}

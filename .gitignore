@@ -1,0 +1,17 @@
+.venv/
+.env
+var/
+web/node_modules/
+web/dist/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Local experiments, research exports and generated bundles
+tmp/
+.env.*
+!.env.example
+docs/huayu-memo-*
+docs/demo-report*
+docs/*.zip
+docs/*.pdf

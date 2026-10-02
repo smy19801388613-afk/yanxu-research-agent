@@ -1,0 +1,22 @@
+{
+  "run_id": "89d188cb59004b24",
+  "conversation_id": "59b3d249a74e4205",
+  "turn_id": "1b4438b96fc0",
+  "state": "idle",
+  "model_decisions": 2,
+  "tool_count": 1,
+  "tools": [
+    "web_search"
+  ],
+  "search_results": 18,
+  "search_queries": [
+    "华宇软件 万象 法律MCP 付费客户 合同 收入",
+    "华宇软件 万象 法律大模型 客户 订单 商业化",
+    "华宇软件 法律MCP 收入 付费 合同",
+    "华宇软件 万象 竞争对手 替代方案 法律AI"
+  ],
+  "report_revision_after": 7,
+  "valuation_count_after": 3,
+  "first_message_time": "2026-10-02T14:41:42.176761+00:00",
+  "final_message_time": "2026-10-02T14:42:02.397664+00:00"
+}

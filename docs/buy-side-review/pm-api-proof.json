@@ -1,0 +1,328 @@
+{
+  "role": "模拟组合基金经理；无真实任职背书",
+  "baseline": "d9a86d1/v0.3.0",
+  "run_id": "013b9220057f4337",
+  "revision": 7,
+  "browser_blockers": [
+    "iab: Browser is not available",
+    "Edge: nodeRepl.fetch request failed",
+    "root-observed browser id 2: Browser is not available: 2"
+  ],
+  "visual_verified": false,
+  "actions": [
+    {
+      "action": "打开产品入口（API补充）",
+      "path": "/",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 422,
+      "sha256": "a205fea34ddec5f6729f6d239d07d44a7733a79b9e360c77df59771ff2ad20e6",
+      "at": "2026-10-02T14:43:06.371629+00:00"
+    },
+    {
+      "action": "读取华宇核心结论与当前版本",
+      "path": "/api/runs/013b9220057f4337",
+      "status": 200,
+      "content_type": "application/json",
+      "bytes": 1577144,
+      "sha256": "0d2feaa0ceac25c74c12b42280ef9da9c1ddda515c7e43a6c182648333a65e24",
+      "at": "2026-10-02T14:43:06.844506+00:00"
+    },
+    {
+      "action": "打开已引用年度原始PDF",
+      "path": "/api/documents/938a6a606c3f4bd2/file",
+      "status": 200,
+      "content_type": "application/pdf",
+      "bytes": 1412387,
+      "sha256": "a3c74b3cc3f18143536d2ae2d684dbfd75577f179418fea2a857d8b37c426679",
+      "at": "2026-10-02T14:43:07.306824+00:00"
+    },
+    {
+      "action": "查看可选估值与当前PS情景",
+      "path": "/api/runs/013b9220057f4337/valuation-options",
+      "status": 200,
+      "content_type": "application/json",
+      "bytes": 4985,
+      "sha256": "c25098932dbabb976a807e000790a61ec5398a06a10e17ddae799da12c3da8b9",
+      "at": "2026-10-02T14:43:07.780911+00:00"
+    },
+    {
+      "action": "导出Markdown供投委会阅读",
+      "path": "/api/runs/013b9220057f4337/export?format=markdown",
+      "status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "bytes": 610932,
+      "sha256": "b9b2c74333213c462cbd89130109c4d075c3a9c412630e3bfa7118e7856e9715",
+      "at": "2026-10-02T14:43:08.278705+00:00"
+    },
+    {
+      "action": "打开可打印报告",
+      "path": "/api/runs/013b9220057f4337/export?format=html&preview=true",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 793154,
+      "sha256": "de4cc0c17afe6b0116885fb6dc39ad7ab87b5ef7349155a5a05a1c9b78aab284",
+      "at": "2026-10-02T14:43:08.734377+00:00"
+    },
+    {
+      "action": "检查完整证据包所含原件",
+      "path": "/api/runs/013b9220057f4337/export?format=bundle",
+      "status": 200,
+      "content_type": "application/zip",
+      "bytes": 1938792,
+      "sha256": "468a7ddbb38532ab75ed278af2516087b0166281c29f2065c00c84d58790ed9d",
+      "at": "2026-10-02T14:43:09.371657+00:00"
+    },
+    {
+      "action": "读取历史入口并查找原研究",
+      "path": "/api/runs",
+      "status": 200,
+      "content_type": "application/json",
+      "bytes": 1152,
+      "sha256": "801a79ed667182d7d3b6746070f383b32688410001151fa3c1f6b1ecc3e88b64",
+      "at": "2026-10-02T14:43:09.922272+00:00"
+    },
+    {
+      "action": "确认评审前后原研究未变",
+      "path": "/api/runs/013b9220057f4337",
+      "status": 200,
+      "content_type": "application/json",
+      "bytes": 1577144,
+      "sha256": "0d2feaa0ceac25c74c12b42280ef9da9c1ddda515c7e43a6c182648333a65e24",
+      "at": "2026-10-02T14:43:10.524621+00:00"
+    },
+    {
+      "action": "复核包内report.md链接实际未重写",
+      "path": "/api/runs/013b9220057f4337/export?format=bundle",
+      "status": 200,
+      "at": "2026-10-02T14:45:49.701193+00:00"
+    }
+  ],
+  "memo": {
+    "title": "华宇软件（300271.SZ）投资研究备忘录：亏损收窄、减值勾稽与AI商业化的证据边界",
+    "summary": "2025年营业收入16.19亿元，同比下降0.59%；归母亏损1.95亿元，较2024年收窄约3.20亿元，年度经营现金流净流出约0.37亿元。2026H1收入6.38亿元，按更正后的同期基数同比增长7.67%，但经营现金净流出约4.40亿元，较上年同期扩大约1.54亿元。2025年费用减少约2.20亿元、减值减少约0.256亿元提供改善线索，完整归因仍须利润桥接；AI产品有名称和自述使用量，本次资料尚未提供可核验的付费合同及回款闭环。用户收入增长1%、PS5倍的假设产出股权价值81.78亿元：历史市场市值存在取价日期差异，媒体TTM PS与用户前瞻PS还存在收入分母差异，均不足以直接形成当前低估或高估判断。",
+    "stance": "研究立场：现有证据支持亏损收窄部分源于费用压降和减值减少，但经营现金流尚未转正、AI收入未拆分，这些证据尚不足以确认经营反转。置信边界受限于缺少AI产品分项收入、具体客户合同及最新市场定价，无法判断当前估值高低。",
+    "theses": 4,
+    "sections": [
+      "公司靠什么赚钱",
+      "竞争与行业位置",
+      "经营质量与现金回收",
+      "估值、预期与安全边际",
+      "催化剂与跟踪信号",
+      "风险与反方观点",
+      "下一步验证什么"
+    ],
+    "source_count": 39,
+    "before_directory_characters": 1923
+  },
+  "valuation": {
+    "methods": [
+      "pe",
+      "ps",
+      "pb",
+      "dcf",
+      "ev_ebitda",
+      "ddm"
+    ],
+    "history": [
+      {
+        "id": "5f6972b2cf05",
+        "method": "ps",
+        "assumptions": {
+          "growth_pct": "1",
+          "multiple": "5"
+        },
+        "output": {
+          "equity_value_100m": "81.779917230295",
+          "enterprise_value_100m": null,
+          "price": null,
+          "base_100m": "16.1940430159",
+          "forecast_100m": "16.355983446059"
+        }
+      },
+      {
+        "id": "7ef9ff9e4158",
+        "method": "ps",
+        "assumptions": {
+          "growth_pct": "1",
+          "multiple": "5"
+        },
+        "output": {
+          "equity_value_100m": "81.779917230295",
+          "enterprise_value_100m": null,
+          "price": null,
+          "base_100m": "16.1940430159",
+          "forecast_100m": "16.355983446059"
+        }
+      },
+      {
+        "id": "b25ff034b11e",
+        "method": "ps",
+        "assumptions": {
+          "growth_pct": "1",
+          "multiple": "5"
+        },
+        "output": {
+          "equity_value_100m": "81.779917230295",
+          "enterprise_value_100m": null,
+          "price": null,
+          "base_100m": "16.1940430159",
+          "forecast_100m": "16.355983446059"
+        }
+      }
+    ]
+  },
+  "exports": {
+    "markdown_characters": 310744,
+    "history_section_starts_at": 21506,
+    "history_share_of_export": 0.931,
+    "html_characters": 416032,
+    "local_source_links": 11,
+    "bundle_manifest": [
+      {
+        "name": "report.md",
+        "bytes": 610932
+      },
+      {
+        "name": "run.json",
+        "bytes": 1690128
+      },
+      {
+        "name": "snapshots/cashflow-2024.json",
+        "bytes": 219
+      },
+      {
+        "name": "snapshots/cashflow-2025.json",
+        "bytes": 218
+      },
+      {
+        "name": "snapshots/income-2024.json",
+        "bytes": 320
+      },
+      {
+        "name": "snapshots/income-2025.json",
+        "bytes": 320
+      },
+      {
+        "name": "snapshots/model-draft.json",
+        "bytes": 2893
+      },
+      {
+        "name": "snapshots/model-repaired.json",
+        "bytes": 2830
+      },
+      {
+        "name": "snapshots/model-review.json",
+        "bytes": 100
+      },
+      {
+        "name": "snapshots/plan.json",
+        "bytes": 473
+      },
+      {
+        "name": "snapshots/research-snippets.json",
+        "bytes": 2
+      },
+      {
+        "name": "snapshots/security.json",
+        "bytes": 80
+      },
+      {
+        "name": "documents/938a6a606c3f4bd2.pdf",
+        "bytes": 1412387
+      }
+    ],
+    "bundle_markdown_local_server_links": 11,
+    "bundle_markdown_relative_pdf_links": 0,
+    "bundle_markdown_sha256": "b9b2c74333213c462cbd89130109c4d075c3a9c412630e3bfa7118e7856e9715"
+  },
+  "history": {
+    "original_run_visible": true,
+    "memo_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  },
+  "unchanged": {
+    "report_revision": true,
+    "updated_at": true
+  },
+  "source_sample": [
+    {
+      "id": "public-web-5fbd303a3dfe",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 2026 年半年度报告摘要 · 第 3 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503974.PDF#page=3"
+    },
+    {
+      "id": "public-web-f5d474dcd941",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 2026 年半年度报告摘要 · 第 4 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503974.PDF#page=4"
+    },
+    {
+      "id": "pdf-938a6a606c3f4bd2-p28",
+      "kind": "pdf",
+      "title": "2025年年度报告.pdf · 第 28 页",
+      "url": "/api/documents/938a6a606c3f4bd2/file#page=28"
+    },
+    {
+      "id": "pdf-938a6a606c3f4bd2-p20",
+      "kind": "pdf",
+      "title": "2025年年度报告.pdf · 第 20 页",
+      "url": "/api/documents/938a6a606c3f4bd2/file#page=20"
+    },
+    {
+      "id": "public-web-22c446f63f62",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 · 第 17 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503975.PDF#page=17"
+    },
+    {
+      "id": "public-web-d9d6179f4443",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 · 第 88 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-04-28/1225213050.PDF#page=88"
+    },
+    {
+      "id": "pdf-938a6a606c3f4bd2-p172",
+      "kind": "pdf",
+      "title": "2025年年度报告.pdf · 第 172 页",
+      "url": "/api/documents/938a6a606c3f4bd2/file#page=172"
+    },
+    {
+      "id": "public-web-e9c8552c931c",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 · 第 45 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503975.PDF#page=45"
+    },
+    {
+      "id": "public-web-5ece46e83fd8",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 · 第 3 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-04-28/1225213083.PDF#page=3"
+    },
+    {
+      "id": "public-web-bb6fc56b4228",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 · 第 127 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503975.PDF#page=127"
+    },
+    {
+      "id": "public-web-1ee81fbcfa51",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 2026 年半年度报告摘要 · 第 1 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503974.PDF#page=1"
+    },
+    {
+      "id": "public-web-1ab4830f0b71",
+      "kind": "pdf",
+      "title": "北京华宇软件股份有限公司 · 第 130 页",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-26/1225503975.PDF#page=130"
+    }
+  ]
+}

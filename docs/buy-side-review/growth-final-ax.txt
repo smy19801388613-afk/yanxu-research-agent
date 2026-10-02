@@ -1,0 +1,242 @@
+Browser tab: 1, Title: "研序 · 对话投研 Agent", URL: "http://127.0.0.1:8920/#memo-industry".
+1 AXWebArea 研序 · 对话投研 Agent, URL: 127.0.0.1:8920/#memo-industry
+	2 container root
+		3 container
+			4 button 研序首页
+				5 image
+				6 text 研序
+				7 text 0.3
+			8 button 新建研究
+				9 image
+				10 text 新建研究
+			11 container 研究导航
+				12 button 研究对话
+					13 image
+					14 text 研究对话
+				15 button 公司研究
+					16 image
+					17 text 公司研究
+				18 button 估值建模
+					19 image
+					20 text 估值建模
+				21 button 数据核验
+					22 image
+					23 text 数据核验
+				24 button 研究版本
+					25 image
+					26 text 研究版本
+			27 container 资料与设置
+				28 button 资料库
+					29 image
+					30 text 资料库
+				31 button 连接设置
+					32 image
+					33 text 连接设置
+				34 button 回收站
+					35 image
+					36 text 回收站
+			37 text 最近研究 2
+			38 button 华宇软件 2025 · 300271.SZ
+				39 text 华宇软件
+				40 container
+					41 text 2025  ·  300271.SZ
+			42 button 华宇软件 2025 · 300271.SZ
+				43 text 华宇软件
+				44 container
+					45 text 2025  ·  300271.SZ
+			46 text 研 我的研究空间
+			47 image
+		48 container
+			49 text 研究空间
+			50 image
+			51 text 研究对话
+			52 button deepseek-v4-pro
+		53 heading 华宇软件, Value: 1
+			54 text 华宇软件
+		55 button 新话题
+			56 image
+			57 text 新话题
+		58 button 自由研究
+		59 image
+		60 text 华宇软件 · 2025
+		61 button 选择公司
+			62 image
+			63 text 选择公司
+		64 container
+			65 text 模型
+			66 pop up button (collapsed, settable) Description: 对话模型, Value: 现有 DeepSeek · deepseek-v4-pro, Secondary Actions: Expand
+				67 menu
+					68 (selected) 现有 DeepSeek · deepseek-v4-pro
+		69 button 设置模型连接
+			70 image
+		71 container
+			72 image
+			73 pop up button (collapsed, settable) Description: 历史研究对话, Value: 评审·成长｜万象商业化探索 · 2026/10/2, Secondary Actions: Expand
+				74 menu
+					75 (disabled) 选择对话
+					76 (selected) 评审·成长｜万象商业化探索 · 2026/10/2
+			77 button Description: 删除当前对话, Help: 删除当前对话，可从回收站恢复
+				78 image
+			79 image
+			80 container
+				81 text 你 22:41
+			82 text 评审·成长｜请只做一次聚焦查证，不生成或保存整篇报告，不计算估值。围绕华宇万象和法律 MCP：1）联网查是否存在可归属的付费客户、订单或收入证据，区分发布/试用/收入；2）找一个具体竞争替代方案和一条削弱商业化乐观判断的证据；3）给我三个值得下一轮追问的问题。优先官网/公告，打开关键正文；清楚标记已核实、公司宣传和未找到的资料，引用可点击来源与日期。已有年报可复用，最多用两组搜索并及时收束。
+			234 container
+				235 button (expanded) 研究过程 · 1 个步骤, Secondary Actions: Collapse
+					236 image
+					237 text 研究过程
+					238 text  ·
+					239 text 1
+					240 text  个步骤
+					241 image
+				242 button (collapsed) 联网搜索 开始联网查证华宇万象与法律MCP的付费客户、订单及收入证据，并寻找竞争替代方案。, Secondary Actions: Expand
+					243 image
+					244 text 联网搜索
+					245 text 开始联网查证华宇万象与法律MCP的付费客户、订单及收入证据，并寻找竞争替代方案。
+					246 image
+			90 image
+			91 container
+				92 text 研序 22:42
+			93 text 已完成一轮聚焦查证，结论如下。
+			94 heading 1）万象 / 法律 MCP 的付费客户、订单或收入证据, Value: 3
+				95 text 1）万象 / 法律 MCP 的付费客户、订单或收入证据
+			96 container
+				97 text 未找到可归属的付费客户、订单或收入证据。  目前公开材料只有：
+			98 content list
+				99 container
+					100 AXListMarker •
+					101 text 公司自述 ：2026 半年报摘要称“新签合同约 8 亿元、同比增长约 25%”，但未单列 AI 产品贡献；公司官网及半年报提到万象法律大模型、法律 MCP、Amicus 等产品，并称“已服务上百家客户、月调用量突破百万”“成为 Kimi 首选法律数据合作方”。这些均为公司宣传口径，没有可核验的付费合同、分项收入或回款记录。
+				102 container
+					103 AXListMarker •
+					104 text 可归属的合同线索 ：子公司大连华宇与星河智联签署技术开发（委托）合同，涉及 SR 渲染、智驾泊车、主动安全等模块，属于智能座舱软件栈， 不是 万象或法律 MCP 的付费订单。
+				105 container
+					106 AXListMarker •
+					107 text 收入口径 ：2026H1 营业收入 6.38 亿元，同比 +7.67%（基于更正后 2025H1 基数 5.92 亿元）；但公司未披露 AI 产品分项收入。
+			108 container
+				109 text 区分 ：发布/试用/合作 ≠ 付费收入。目前只有“发布”“试用”“合作”层面的信息，没有“付费客户—合同—收入—回款”的闭环证据。
+			110 heading 2）竞争替代方案与削弱商业化乐观判断的证据, Value: 3
+				111 text 2）竞争替代方案与削弱商业化乐观判断的证据
+			112 content list
+				113 container
+					114 AXListMarker •
+					115 text 竞争替代方案 ：通用大模型厂商（如 Kimi 等）本身具备法律问答能力，且华宇与 Kimi 是“合作”关系而非排他绑定；法律科技同行也在布局垂类大模型。华宇的“法律数据资产”优势尚未转化为可验证的付费壁垒。
+				116 container
+					117 AXListMarker •
+					118 text 削弱商业化乐观判断的证据 ：
+				119 container
+					120 AXListMarker •
+					121 text 2026H1 经营现金流净额  -4.40 亿元 ，较上年同期 -2.86 亿元净流出扩大约 1.54 亿元；应收账款较上年末增加 11.66%，存货增加 28.08%。这说明“新签合同增长”尚未同步转化为现金回收，AI 订单到回款的闭环存疑。
+				122 container
+					123 AXListMarker •
+					124 text 公司 2026 年 7 月因政企数智化业务收入确认不当收到北京证监局警示函及深交所监管函，反映收入确认内控缺陷，进一步削弱对“合同额增长”可信度的乐观判断。
+			125 heading 3）值得下一轮追问的三个问题, Value: 3
+				126 text 3）值得下一轮追问的三个问题
+			127 content list
+				128 container
+					129 AXListMarker 1.
+					130 text AI 产品分项收入与付费转化 ：万象系列、法律 MCP、Amicus 在 2026H1 分别贡献多少收入、合同额和回款？月调用量百万中付费调用占比多少？
+				131 container
+					132 AXListMarker 2.
+					133 text 现金流恶化归因 ：2026H1 经营现金流 -4.40 亿元中，销售收现、采购支出、职工薪酬各贡献多少？冻结存款 1.28 亿元是否涉及实际经营现金流出？
+				134 container
+					135 AXListMarker 3.
+					136 text 收入确认整改影响 ：总额法改净额法后，政企数智化业务 2025 年前三季度收入调减 6746 万元，该调整是否影响后续季度收入确认口径？对 2026 年全年收入预测有何影响？
+			137 container
+				138 text 已核实 ：2026H1 收入 6.38 亿元、归母 -5685 万元、经营现金流 -4.40 亿元；2025 年收入 16.19 亿元、归母 -1.95 亿元；会计差错更正公告确认 2025H1 收入由 6.53 亿元调减至 5.92 亿元。
+			139 container
+				140 text 公司宣传 ：万象服务上百家客户、月调用量百万、Kimi 首选法律数据合作方、新签合同 8 亿元。
+			141 container
+				142 text 未找到 ：AI 产品分项收入、付费合同、客户名单、回款记录。
+			143 text 来源：
+			144 content list
+				145 container
+					146 AXListMarker •
+					147 link Description: 华宇软件2026年半年报：新签合同增长，亏损收窄但现金流恶化, Value: finance.eastmoney.com/a/202608263854393567.html
+					148 text （2026-08-26）
+				149 container
+					150 AXListMarker •
+					151 link Description: 华宇软件：2026年上半年亏损5685.18万元, Value: finance.eastmoney.com/a/202608263854316145.html
+					152 text （2026-08-26）
+				153 container
+					154 AXListMarker •
+					155 link Description: 华宇软件子公司大连华宇与星河智联签署技术开发（委托）合同, Value: finance.eastmoney.com/a/202607243819623560.html
+					156 text （2026-07-24）
+				157 container
+					158 AXListMarker •
+					159 link Description: 华宇软件及高管被出具警示函，涉信披不准确, Value: finance.eastmoney.com/a/202607173811323789.html
+					160 text （2026-07-17）
+				161 container
+					162 AXListMarker •
+					163 link Description: 华宇软件：关于前期会计差错更正的公告, Value: vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=300271&id=12226938
+					164 text （2026-04-28）
+			165 text 本轮联网来源：
+			166 content list
+				167 container
+					168 AXListMarker •
+					169 link Description: 华宇软件：2026年第一次临时股东会决议公告（仅搜索摘要）, Value: finance.eastmoney.com/a/202609113872297747.html
+				170 container
+					171 AXListMarker •
+					172 link Description: 北京 华宇 软件股份有限公司（仅搜索摘要）, Value: thunisoft.cn/cn/
+				173 container
+					174 AXListMarker •
+					175 link Description: 北京 华宇 软件股份有限公司_百度百科（仅搜索摘要）, Value: baike.baidu.com/item/%E5%8C%97%E4%BA%AC%E5%8D%8E%E5%AE%87%E8%BD%AF%E4%BB%B6%E8%82%A1%E4%BB%BD%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8/17651634
+				176 container
+					177 AXListMarker •
+					178 link Description: 华宇软件(300271.SZ)：2026年中报净利润为-5685.18万元（仅搜索摘要）, Value: finance.eastmoney.com/a/202608263854005322.html
+				179 container
+					180 AXListMarker •
+					181 link Description: 华宇软件：上半年亏损收窄至5685万元（仅搜索摘要）, Value: finance.eastmoney.com/a/202608253853091324.html
+				182 container
+					183 AXListMarker •
+					184 link Description: 华宇软件与广西数据集团举行座谈交流 共推数据要素领域合作（仅搜索摘要）, Value: finance.eastmoney.com/a/202609093868720051.html
+				185 container
+					186 AXListMarker •
+					187 link Description: 机构风向标 | 华宇软件(300271)2026年二季度已披露持仓机构仅5家（仅搜索摘要）, Value: finance.eastmoney.com/a/202608263853779023.html
+				188 container
+					189 AXListMarker •
+					190 link Description: 华宇软件：第九届董事会第六次会议决议公告（仅搜索摘要）, Value: finance.eastmoney.com/a/202608113838047567.html
+			191 text entry area (settable) 与研序讨论研究
+			192 button 上传 PDF
+				193 image
+				194 text 上传 PDF
+			195 button 接入资料
+				196 image
+				197 text 接入资料
+			198 button 查找年报
+				199 image
+				200 text 查找年报
+			201 button (disabled) 发送研究消息
+				202 image
+		203 container
+			204 heading 资料与成果, Value: 3
+				205 text 资料与成果
+			206 button 深入研究并保存报告
+				207 image
+				208 text 深入研究并保存报告
+				209 image
+			210 button 公司研究 6 项事实 · 第 7 版
+				211 image
+				212 text 公司研究
+				213 text 6 项事实 · 第 7 版
+				214 image
+			215 button 估值与假设 3 份情景
+				216 image
+				217 text 估值与假设
+				218 container
+					219 text 3  份情景
+				220 image
+			221 heading 已接入材料 · 1, Value: 4
+				222 text 已接入材料 ·  1
+			223 link Description: 2025年年度报告.pdf 194 页 · 公开披露, Value: 127.0.0.1:8920/api/documents/938a6a606c3f4bd2/file
+			224 heading 网络来源, Value: 4
+				225 text 网络来源
+			226 link Description: 华宇软件：第九届董事会第六次会议决议公告 2026-08-11 · 搜索摘要, Value: finance.eastmoney.com/a/202608113838047567.html
+			227 link Description: 华宇软件：关于为全资子公司向银行申请综合授信提供担保的公告 2026-08-11 · 搜索摘要, Value: finance.eastmoney.com/a/202608113838043420.html
+			228 link Description: 华宇软件及高管被出具警示函，涉信披不准确 2026-07-17 · 搜索摘要, Value: finance.eastmoney.com/a/202607173811323789.html
+			229 link Description: 华宇软件：预计2026年上半年亏损5400万元-6000万元 2026-07-13 · 搜索摘要, Value: finance.eastmoney.com/a/202607133804084191.html
+			230 link Description: 华宇软件收到深交所监管函 2026-07-10 · 搜索摘要, Value: finance.eastmoney.com/a/202607103801831992.html
+			231 link Description: 深交所向华宇软件下发监管函 2026-07-10 · 搜索摘要, Value: finance.eastmoney.com/a/202607103801958950.html
+			232 link Description: 政企数智化业务收入确认不当 华宇软件多期营收被更改 2026-07-10 · 搜索摘要, Value: finance.eastmoney.com/a/202607103801954121.html
+			233 link Description: 华宇软件、铂力特同日收监管警示函 两公司董事长等对违规担主责 2026-07-10 · 搜索摘要, Value: finance.eastmoney.com/a/202607103802189754.html
+
+The focused UI element is 235 button (expanded) 研究过程 · 1 个步骤, Secondary Actions: Collapse

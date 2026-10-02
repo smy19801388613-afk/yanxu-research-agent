@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from . import store, documents, disclosures, web_research
 from .providers import model_json, ProviderError
 from .config import VERSION
+from .report_state import valuation_snapshot, link_report_valuations
 
 SECTION_TITLES = {
     "business": "公司靠什么赚钱",
@@ -101,7 +102,7 @@ def reference_catalog(run):
     for v in run.get("valuation_history", []):
         refs["valuation-" + v["id"]] = {"id": "valuation-" + v["id"], "kind": "valuation",
             "title": v["method_name"] + " · 用户假设情景", "url": None,
-            "assumptions": v["assumptions"], "output": v["output"]}
+            "assumptions": v["assumptions"], "output": v["output"], "created_at": v.get("created_at")}
     return refs
 
 
@@ -168,12 +169,15 @@ def validate_memo(candidate, run):
     return clean
 
 
-def save_memo(run_id, memo, note, conversation_id=None):
+def save_memo(run_id, memo, note, conversation_id=None, valuation_context=None):
     def change(run):
+        # Production generation passes its frozen input snapshot. Direct saves use
+        # their current atomic run snapshot; no metadata is added to previous memos.
+        linked_memo = link_report_valuations(memo, valuation_context if valuation_context is not None else valuation_snapshot(run))
         revision = run.get("report_revision", 1)
         run.setdefault("memo_revisions", []).append({"revision": revision, "memo": run.get("memo"),
             "replaced_at": store.now(), "change_note": note, "conversation_id": conversation_id})
-        run.update(memo=memo, report_revision=revision+1, memo_updated_at=store.now())
+        run.update(memo=linked_memo, report_revision=revision+1, memo_updated_at=store.now())
         run["events"].append({"time": store.now(), "label": "深度研究报告已保存", "detail": note, "kind": "info"})
     run = store.update_run(run_id, change)
     return {"artifact": "report", "run_id": run_id, "revision": run["report_revision"],
@@ -374,6 +378,7 @@ def build(run_id, question, chat=None, progress=None):
     refs = reference_catalog(run)
     # Financial facts + all collected material, with source provenance retained.
     source_context=bounded_sources(refs)
+    report_valuation_snapshot = valuation_snapshot(run)
     context = {"company": company, "ticker": ticker, "financial_year": req["year"], "as_of": cutoff,
         "question": question, "focus": plan.get("focus"), "facts": run["facts"], "calculations": run["calculations"],
         "valuations": run.get("valuation_history", [])[-4:], "sources": source_context,"available_materials":material_inventory(refs),
@@ -400,6 +405,8 @@ def build(run_id, question, chat=None, progress=None):
         if pdf_verify and documents.attached_documents(chat):
             register_sources(chat,documents.search_attached(chat,pdf_verify))
         run=store.get_run(run_id);refs=reference_catalog(run)
+        report_valuation_snapshot = valuation_snapshot(run)
+        context['valuations'] = run.get('valuation_history', [])[-4:]
         context['sources']=bounded_sources(refs)
         context['available_materials']=material_inventory(refs)
         context['allowed_reference_ids']=[s['id'] for s in context['sources']]
@@ -422,7 +429,7 @@ def build(run_id, question, chat=None, progress=None):
     store.update_run(run_id, lambda r: r.update(deep_research_log={"plan": plan, "follow_up": follow,
         "calls": calls, "review": review, "completed_at": store.now()}))
     update("报告核验完成，保存可追溯的新版本")
-    return save_memo(run_id, memo, str(question)[:500], chat.get("id"))
+    return save_memo(run_id, memo, str(question)[:500], chat.get("id"), report_valuation_snapshot)
 
 
 def refine(run_id, question, chat, progress=None):
@@ -433,6 +440,7 @@ def refine(run_id, question, chat, progress=None):
     if not any(s['kind'] in ('pdf','web') for s in refs.values()):
         raise ValueError('当前还没有可供修订的业务资料，请先执行深度研究')
     sources=bounded_sources(refs)
+    report_valuation_snapshot = valuation_snapshot(run)
     def check():
         if store.cancelled(run_id) or store.conversation_cancelled(chat['id']): raise Cancelled()
     check()
@@ -463,4 +471,4 @@ def refine(run_id, question, chat, progress=None):
         'input_source_ids':[s['id'] for s in sources]}))
     check()
     if progress: progress('修订完成，保存报告新版本')
-    return save_memo(run_id,memo,question[:500],chat['id'])
+    return save_memo(run_id,memo,question[:500],chat['id'],report_valuation_snapshot)

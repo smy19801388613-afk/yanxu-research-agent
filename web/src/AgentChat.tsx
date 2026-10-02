@@ -6,6 +6,29 @@ import ResearchDocuments,{DocumentLinks} from './ResearchDocuments';
 import ResearchText from './ResearchText';
 const toolNames:any={search_company:'查找公司',start_research:'建立财务底稿',fetch_annual_report:'获取公开年报',attach_document:'接入研究材料',read_document:'查阅 PDF 原文',search_documents:'检索披露原文',web_search:'联网搜索',search_web:'联网搜索',read_webpage:'阅读网页',read_public_pdf:'查阅公开公告PDF',read_web_page:'阅读网页',read_web:'阅读网页',build_investment_memo:'撰写深度研究',refine_investment_memo:'依据原文修订报告',valuation_options:'比较估值方法',calculate_valuation:'计算估值情景',propose_valuation:'提出估值方案',calculate_proposal:'计算选定方案',revise_report:'修订研究报告'};
 const deepResearchPrompt='请围绕当前公司开展深度买方研究：联网搜索行业、竞争格局、最新经营进展与风险，阅读关键原文并结合财务底稿、年报，检验投资论点和反证，讨论估值适用条件、催化剂与判断失效条件，最后生成并保存完整研究备忘录。明确资料日期、来源、推断和未解决的问题；缺失数据不要编造。';
+function sourceKey(url:string){try{const u=new URL(url);u.protocol='https:';u.hash='';Array.from(u.searchParams.keys()).filter(k=>k.startsWith('utm_')).forEach(k=>u.searchParams.delete(k));return u.toString().replace(/\/$/,'')}catch{return url}}
+function observedSources(steps:any[],message=''){
+  const sources=new Map<string,any>();
+  for(const step of steps){const r=step.result||{},read=['read_webpage','read_web_page','read_public_pdf'].includes(step.tool);
+    let rows=step.tool==='web_search'||step.tool==='read_public_pdf'?r.results||[]:read?[r]:step.tool==='build_investment_memo'?r.observed_sources||[]:[];
+    if(read&&!rows.length)rows=[{url:step.arguments?.url}];
+    for(const s of rows){const url=s.url||step.arguments?.url;if(!/^https?:\/\//i.test(url||''))continue;
+      const body=(read||step.tool==='build_investment_memo')&&!['failed','cancelled'].includes(step.state)&&!!s.text?.trim()&&!r.error&&!['error','excluded','excluded_after_cutoff','needs_ocr','document_link'].includes(r.status)&&!['failed','excluded','pdf_link_only','search_snippet','snippet_only'].includes(s.read_status);
+      const key=sourceKey(url),prior=sources.get(key),status=body?'body_read':read?'failed':'search_snippet';
+      if(prior?.read_status==='body_read'||(prior&&status==='search_snippet'))continue;
+      sources.set(key,{...prior,...s,url,read_status:status,cited:message.includes(url)});
+    }
+  }
+  return Array.from(sources.values()).sort((a,b)=>Number(b.read_status==='body_read')-Number(a.read_status==='body_read')||Number(b.cited)-Number(a.cited));
+}
+function turnCoverage(chat:any,turnId:string){
+  if(chat?.turn_coverage?.[turnId])return chat.turn_coverage[turnId];
+  const steps=(chat?.steps||[]).filter((s:any)=>s.turn_id===turnId),text=(chat?.messages||[]).find((m:any)=>m.turn_id===turnId&&m.role==='user')?.content||'',sources=observedSources(steps);
+  const body=sources.filter(s=>s.read_status==='body_read').length,required=text.split(/[。；，,、\n]/).some((c:string)=>/(?:打开|读取|阅读|查阅|核对).{0,10}(?:正文|原文|全文)/.test(c)&&!/(?:不|无需|别).{0,8}(?:打开|读取|阅读|查阅|核对)/.test(c)),pages=steps.filter((s:any)=>s.tool==='read_document'&&s.state==='completed').reduce((n:number,s:any)=>n+(s.result?.snippets?.filter((p:any)=>p.text?.trim()).length||0),0);
+  const unknown=steps.some((s:any)=>s.tool==='build_investment_memo'&&!s.result?.observed_sources);
+  return {search_calls:steps.filter((s:any)=>s.tool==='web_search'&&s.state==='completed').length,search_results:steps.filter((s:any)=>s.tool==='web_search').reduce((n:number,s:any)=>n+(s.result?.results?.length||0),0),body_sources:body,document_pages:pages,status:unknown?'unknown':required&&!body&&!pages?'partial':'observed',sources,reused_cited_sources:null};
+}
+function Coverage({value}:any){if(!value||!(value.search_calls||value.body_sources||value.document_pages||value.reused_cited_sources||['partial','unknown'].includes(value.status)))return null;if(value.status==='unknown')return <div className="turn-coverage">旧记录未保存完整的本轮来源覆盖，请展开研究过程与报告来源核对。</div>;return <div className={'turn-coverage '+value.status} role="status"><strong>{value.status==='partial'?'正文查证未完成':'本轮资料覆盖'}</strong><span>搜索 {value.search_calls} 次 · 结果 {value.search_results} 条 · 新增网络正文 {value.body_sources} 篇 · 本地读页 {value.document_pages}</span>{value.reused_cited_sources!=null&&<small>引用已有材料 {value.reused_cited_sources} 条（按实际链接统计）</small>}{value.status==='partial'&&<small>本轮未取得可用正文；摘要只作为线索，不能视为已完成正文核验。</small>}{!!value.unread_sources&&<small>另有 {value.unread_sources} 个来源未取得正文{value.failed_sources?'，其中 '+value.failed_sources+' 个读取失败':''}。</small>}</div>}
 function WebReferences({sources}:any){return <div className="web-references">{sources.filter((s:any)=>/^https?:\/\//i.test(s.url||'')).map((s:any,i:number)=><a href={s.url} target="_blank" rel="noopener noreferrer" key={s.id||s.url||i}><Globe2 size={15}/><span>{s.title||s.url}<small>{s.published_at||'日期未确认'}{s.read_status?' · '+(({read:'已读原文',article_text:'已读原文',public_pdf_text:'已读PDF原文',pdf_link_only:'PDF链接，未读正文',failed:'未取得正文',completed:'已读原文',body_read:'已读原文',snippet_only:'搜索摘要',search_snippet:'搜索摘要'} as any)[s.read_status]||'待查阅'):''}</small></span><ExternalLink size={12}/></a>)}</div>}
 function Step({step,onOpen,onAdopt,busy,accepted}:any){
   const [open,setOpen]=useState(false),result=step.result;
@@ -59,7 +82,7 @@ export default function AgentChat({run,config,onRunUpdated,onOpen,onNewResearch,
   const linkedRun=chat&&!chat.run_id?null:run;
   const contextName=linkedRun?linkedRun.company+' · '+linkedRun.request.year:'自由研究';
   const messages=chat?.messages||[];
-  const webSources=Array.from(new Map((chat?.steps||[]).flatMap((s:any)=>s.tool==='web_search'?s.result?.results||[]:[]).map((s:any)=>[s.url,s])).values()).slice(-8);
+  const webSources=observedSources(chat?.steps||[],messages.filter((m:any)=>m.role==='assistant').map((m:any)=>m.content).join('\n'));
   const suggestions=linkedRun?[
     ['深入研究并保存报告',deepResearchPrompt],
     ['讨论研究思路','我更关心利润增长的可持续性。请先和我讨论该如何研究，有哪些反证和缺失资料。'],
@@ -80,13 +103,14 @@ export default function AgentChat({run,config,onRunUpdated,onOpen,onNewResearch,
         {messages.map((m:any,i:number)=>{const steps=m.role==='user'?(chat?.steps||[]).filter((s:any)=>s.turn_id===m.turn_id):[];return <div key={m.id} className={'chat-turn '+m.role}>
           <div className="message-row"><span className="message-avatar">{m.role==='user'?<User size={15}/>:<Layers3 size={17}/>}</span><div className={'message-content '+(m.error?'error':'')}><div className="message-label">{m.role==='user'?'你':'研序'}<time>{new Date(m.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</time></div><ResearchText className="chat-prose" text={m.content}/></div></div>
           {!!steps.length&&<details className="tool-timeline" open={active&&i===messages.length-1}><summary><ActivityIcon running={active&&i===messages.length-1}/><span>{active&&i===messages.length-1?'正在研究':'研究过程'} · {steps.length} 个步骤</span>{steps.some((s:any)=>s.result?.artifact==='proposal')&&<span className="badge">含估值方案</span>}<ChevronDown size={14}/></summary><div className="tool-timeline-items">{steps.map((s:any)=><Step key={s.id} step={s} onOpen={openArtifact} busy={active||sending} accepted={chat?.proposals?.find((p:any)=>p.id===s.result?.proposal?.id)?.state==='accepted'} onAdopt={(p:any)=>send(undefined,'我采用估值方案 '+p.id+'（'+p.method_name+'），请按展示的参数计算并保存。')}/>)}</div></details>}
+          {m.role==='assistant'&&<Coverage value={m.coverage||turnCoverage(chat,m.turn_id)}/>}
           {m.role==='user'&&i===messages.length-1&&active&&<div className="thinking-status"><LoaderCircle size={14} className="spin"/>{steps.at(-1)?.state==='running'?'正在执行工具…':'正在结合你的问题和工具结果继续研究…'}</div>}
         </div>})}<div ref={bottom}/>
       </div>
       <form className="chat-composer" onSubmit={send}>{error&&<p className="form-error" role="alert">{error}</p>}<textarea ref={textarea} aria-label="与研序讨论研究" placeholder="提出问题，或继续追问你的投资判断…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}} maxLength={8000} disabled={sending}/>
         <ResearchDocuments run={linkedRun} ensureChat={ensureChat} onDone={documentsChanged} disabled={active||sending}/>
         <div className="composer-bottom"><span>Enter 发送 · Shift + Enter 换行</span>{active?<button type="button" className="secondary" onClick={()=>post('/conversations/'+chat.id+'/cancel').catch(e=>setError(e.message))}><Square size={13}/>停止</button>:<button className="send-button" aria-label="发送研究消息" disabled={sending||!draft.trim()||!profile}>{sending?<LoaderCircle className="spin" size={17}/>:<ArrowUp size={18}/>}</button>}</div></form>
-    </section><aside className="chat-companion"><h3>资料与成果</h3><button className="deep-research-action" onClick={()=>send(undefined,deepResearchPrompt)} disabled={!linkedRun||active||sending||!profile}><Sparkles size={18}/><span>深入研究并保存报告</span><ChevronRight size={14}/></button><button onClick={()=>onOpen('overview')} disabled={!linkedRun}><BookOpen size={18}/><span>公司研究<small>{linkedRun?linkedRun.facts.length+' 项事实 · 第 '+(linkedRun.report_revision||1)+' 版':'尚未建立研究'}</small></span><ChevronRight size={14}/></button><button onClick={()=>onOpen('model')} disabled={!linkedRun}><SlidersHorizontal size={18}/><span>估值与假设<small>{linkedRun?.valuation_history?.length||0} 份情景</small></span><ChevronRight size={14}/></button><DocumentLinks documents={attached}/>{!!webSources.length&&<div className="chat-web-sources"><h4>网络来源</h4><WebReferences sources={webSources}/></div>}</aside></div>
+    </section><aside className="chat-companion"><h3>资料与成果</h3><button className="deep-research-action" onClick={()=>send(undefined,deepResearchPrompt)} disabled={!linkedRun||active||sending||!profile}><Sparkles size={18}/><span>深入研究并保存报告</span><ChevronRight size={14}/></button><button onClick={()=>onOpen('overview')} disabled={!linkedRun}><BookOpen size={18}/><span>公司研究<small>{linkedRun?linkedRun.facts.length+' 项事实 · 第 '+(linkedRun.report_revision||1)+' 版':'尚未建立研究'}</small></span><ChevronRight size={14}/></button><button onClick={()=>onOpen('model')} disabled={!linkedRun}><SlidersHorizontal size={18}/><span>估值与假设<small>{linkedRun?.valuation_history?.length||0} 份情景</small></span><ChevronRight size={14}/></button><DocumentLinks documents={attached}/>{!!webSources.length&&<div className="chat-web-sources"><h4>网络来源 · 共 {webSources.length} 个</h4><WebReferences sources={webSources.slice(0,8)}/>{webSources.length>8&&<details><summary>查看其余 {webSources.length-8} 个来源</summary><WebReferences sources={webSources.slice(8)}/></details>}</div>}</aside></div>
   </div>
 }
 function ActivityIcon({running}:{running:boolean}){return running?<LoaderCircle size={14} className="spin"/>:<Check size={14}/>}

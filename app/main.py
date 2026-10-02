@@ -198,7 +198,10 @@ async def conversation_events(cid:str):
     return StreamingResponse(generate(),media_type="text/event-stream",headers={"Cache-Control":"no-cache"})
 
 @app.get("/api/runs/{run_id}")
-def get(run_id:str): return store.get_run(run_id)
+def get(run_id:str):
+    from .report_state import report_valuation_status
+    run=store.get_run(run_id)
+    return run | {"report_valuation_status":report_valuation_status(run)}
 
 @app.post("/api/runs/{run_id}/retry",status_code=202)
 def retry(run_id:str):
@@ -221,7 +224,7 @@ async def events(run_id:str):
     async def generate():
         last=None
         while True:
-            run=store.get_run(run_id)
+            run=get(run_id)
             if run["updated_at"]!=last:
                 last=run["updated_at"]
                 yield "data: "+json.dumps(run,ensure_ascii=False)+"\n\n"
@@ -268,22 +271,17 @@ def export(run_id:str,format:str="markdown",preview:bool=False):
     run=store.get_run(run_id);stem=f"research-{run_id}"
     if format=="json":
         return Response(json.dumps(run,ensure_ascii=False,indent=2),media_type="application/json",headers={"Content-Disposition":f'attachment; filename="{stem}.json"'})
-    if format=="markdown":
-        return Response(markdown(run),media_type="text/markdown; charset=utf-8",headers={"Content-Disposition":f'attachment; filename="{stem}.md"'})
-    if format=="html":
+    if format in ("markdown","audit-markdown"):
+        audit=format=="audit-markdown"
+        return Response(markdown(run,audit=audit),media_type="text/markdown; charset=utf-8",headers={"Content-Disposition":f'attachment; filename="{stem}{"-audit" if audit else ""}.md"'})
+    if format in ("html","audit-html"):
+        audit=format=="audit-html"
         disposition="inline" if preview else "attachment"
-        return Response(printable(run),media_type="text/html",headers={"Content-Disposition":f'{disposition}; filename="{stem}.html"'})
+        return Response(printable(run,audit=audit),media_type="text/html",headers={"Content-Disposition":f'{disposition}; filename="{stem}{"-audit" if audit else ""}.html"'})
     if format=="bundle":
-        stream=io.BytesIO()
-        with zipfile.ZipFile(stream,"w",zipfile.ZIP_DEFLATED) as z:
-            z.writestr("report.md",markdown(run));z.writestr("run.json",json.dumps(run,ensure_ascii=False,indent=2))
-            for f in (DATA/"runs"/run_id).glob("*.json"): z.write(f,"snapshots/"+f.name)
-            if run.get("document_id"):
-                doc=store.get_document(run["document_id"]);z.write(doc["path"],"source.pdf")
-            for doc_id in run.get("document_ids",[]):
-                if doc_id==run.get("document_id"): continue
-                doc=store.get_document(doc_id);z.write(doc["path"],"documents/"+doc_id+".pdf")
-        return Response(stream.getvalue(),media_type="application/zip",headers={"Content-Disposition":f'attachment; filename="{stem}.zip"'})
+        from .exporting import evidence_bundle
+        content=evidence_bundle(run,store.get_document,DATA/"runs"/run_id)
+        return Response(content,media_type="application/zip",headers={"Content-Disposition":f'attachment; filename="{stem}.zip"'})
     raise ValueError("不支持该导出格式")
 
 @app.get("/api/documents")

@@ -121,10 +121,10 @@ def save_result(run_id,method,inputs,origin="form",quotes=None):
         nonlocal result
         result=calculate(run,method,inputs,origin,quotes)
         history=run.get("valuation_history",[])
-        if history and same_result(history[-1],result):
-            result=history[-1]
+        previous=next((v for v in reversed(history) if v["method"]==method),None)
+        if previous and same_result(previous,result):
+            result=previous
             return
-        previous=next((v for v in reversed(run.get("valuation_history",[])) if v["method"]==method),None)
         if previous:
             changes={}
             for key in ("equity_value_100m","enterprise_value_100m","price"):

@@ -72,6 +72,7 @@ def scenario(profit, growth_pct, pe, shares=None):
 def audit_text(text, facts, calculations, year):
     """Conservative checks for supported numeric claims; no broad semantic promises."""
     issues=[]
+    checked_amounts=set()
     current={f["metric"]:number(f["value"]) for f in facts if f["year"]==year and f["value"] is not None}
     for metric, meta in METRICS.items():
         if metric not in current:
@@ -80,6 +81,11 @@ def audit_text(text, facts, calculations, year):
         if metric=="n_cashflow_act": aliases += ["经营活动现金流量净额","经营现金流","现金流净额"]
         for alias in sorted(set(aliases),key=len,reverse=True):
             for match in re.finditer(re.escape(alias)+fr"(?:[为是：:\s]|达到|约|人民币|{year}年)*([+-]?[\d,]+(?:\.\d+)?)\s*(亿元|万元|千元|元)",text):
+                # Aliases may overlap, but separate occurrences remain separate claims.
+                location=(metric,match.start(1),match.end(2))
+                if location in checked_amounts:
+                    continue
+                checked_amounts.add(location)
                 context=re.split(r"[。；;\n]",text[max(0,match.start()-60):match.start()])[-1]
                 years=re.findall(r"(20\d{2})\s*年",context)
                 if years and int(years[-1])!=year:
@@ -90,7 +96,7 @@ def audit_text(text, facts, calculations, year):
                 precision=len(match[1].split(".")[1]) if "." in match[1] else 0
                 tolerance=multiplier*(Decimal(10)**(-precision))/2
                 if abs(stated-current[metric])>tolerance:
-                    issues.append({"type":"value_mismatch","claim":match[0],"message":f"{meta['label']}与当前核验值不一致","expected_100m":str(current[metric]/Decimal(100000000)),"fact_id":f"{metric}-{year}"})
+                    issues.append({"type":"value_mismatch","claim":match[0],"message":f"{meta['label']}与当前核验值不一致","expected_100m":str(current[metric]/Decimal(100000000)),"fact_id":f"{metric}-{year}","span":[match.start(),match.end()]})
     cash=current.get("n_cashflow_act")
     profit=current.get("n_income_attr_p")
     if cash is not None and profit is not None:
@@ -107,4 +113,4 @@ def audit_text(text, facts, calculations, year):
     return list(unique.values())
 
 def json_key(issue):
-    return issue["type"]+issue["claim"]
+    return issue["type"]+issue["claim"]+str(issue.get("span", ""))

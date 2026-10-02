@@ -1,0 +1,78 @@
+{
+  "run_id": "013b9220057f4337",
+  "revision": 7,
+  "baseline_markdown_chars": 310744,
+  "current_markdown_chars": 18634,
+  "current_html_chars": 89019,
+  "reduction_pct": 94.0,
+  "contains_old_memo_json": false,
+  "retained_revision_count": 6,
+  "bundle_local_api_links": 0,
+  "bundle_relative_pdf_links": 15,
+  "manifest_documents": [
+    {
+      "id": "938a6a606c3f4bd2",
+      "title": "2025年年度报告.pdf",
+      "path": "documents/938a6a606c3f4bd2.pdf",
+      "sha256": "a3c74b3cc3f18143536d2ae2d684dbfd75577f179418fea2a857d8b37c426679",
+      "original_url": "https://static.cninfo.com.cn/finalpage/2026-04-28/1225213050.PDF",
+      "access": "packaged",
+      "requires_network": false
+    }
+  ],
+  "network_reference_count": 143,
+  "all_file_hashes_verified": true,
+  "unchanged": {
+    "memo": true,
+    "memo_revisions": true,
+    "report_revision": true,
+    "valuation_history": true,
+    "updated_at": true,
+    "events": true
+  },
+  "browser": {
+    "surface": "CUA IAB browser 2, hidden child tab 1",
+    "viewport_override": false,
+    "amount_change_labels_verified": [
+      "+3.20 亿元 金额变化",
+      "+0.86 亿元 金额变化"
+    ],
+    "directory_precedes_theses": true,
+    "valuation_anchor_heading_visible": true,
+    "pdf_source_label": "PDF 原文",
+    "export_options_visible": true,
+    "followup_prefill_only": true,
+    "existing_draft_restored": true,
+    "screenshots": [
+      "pm-execution-anchor.png",
+      "pm-execution-export.png",
+      "pm-execution-prefill.png",
+      "pm-execution-freshness.png"
+    ],
+    "freshness_banner_verified": true,
+    "offline_pdf_viewer_page_jump_verified": false,
+    "freshness_run_id": "c9a2499558d04a00"
+  },
+  "live_export_routes": {
+    "markdown": {
+      "status": 200,
+      "bytes": 32115
+    },
+    "audit-markdown": {
+      "status": 200,
+      "bytes": 611241
+    },
+    "html": {
+      "status": 200,
+      "bytes": 179548
+    },
+    "audit-html": {
+      "status": 200,
+      "bytes": 793523
+    },
+    "bundle": {
+      "status": 200,
+      "bytes": 2251449
+    }
+  }
+}

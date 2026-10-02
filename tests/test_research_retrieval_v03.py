@@ -112,14 +112,16 @@ def test_revised_base_or_inputs_still_create_valuation_versions(run):
     assert revised['comparison']['output_changes']['equity_value_100m']['delta']!='0'
 
 
-def test_existing_duplicate_history_is_preserved_and_only_consecutive_saves_reused(run):
+def test_existing_duplicate_history_is_preserved_and_same_method_saves_reused(run):
     inputs={'growth_pct':1,'multiple':5}
     old=[valuation.calculate(run,'ps',inputs) for _ in range(3)]
     store.update_run(run['id'],lambda r:r.update(valuation_history=old))
     reused=valuation.save_result(run['id'],'ps',inputs)
     assert reused['id']==old[-1]['id']
     assert store.get_run(run['id'])['valuation_history']==old
-    valuation.save_result(run['id'],'pb',{'book_equity_100m':20,'multiple':2})
-    new=valuation.save_result(run['id'],'ps',inputs)
-    assert new['id']!=reused['id']
-    assert len(store.get_run(run['id'])['valuation_history'])==5
+    pb=valuation.save_result(run['id'],'pb',{'book_equity_100m':20,'multiple':2})
+    same_ps=valuation.save_result(run['id'],'ps',inputs)
+    assert same_ps==reused==old[-1]
+    history=store.get_run(run['id'])['valuation_history']
+    assert history==old+[pb]
+    assert len(history)==4

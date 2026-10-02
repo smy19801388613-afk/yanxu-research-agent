@@ -38,7 +38,12 @@ async def local_origin(request:Request,call_next):
         origin=request.headers.get("origin")
         if origin and urlparse(origin).hostname not in ("127.0.0.1","localhost"):
             return JSONResponse({"detail":"只接受本机工作台发起的操作"},status_code=403)
-    return await call_next(request)
+    response = await call_next(request)
+    if request.url.path in ('/', '/index.html', '/api/health', '/api/settings'):
+        # A desktop launcher must fetch the current shell and running version.
+        # Hashed JS/CSS assets can retain their normal browser caching behavior.
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 @app.exception_handler(KeyError)
 async def not_found(request,error):

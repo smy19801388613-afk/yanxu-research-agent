@@ -70,7 +70,7 @@ export default function App(){
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <button className="brand" aria-label="研序首页" onClick={()=>setTab('chat')}><span className="brand-mark"><Layers3 size={23}/></span><span>研序</span><span className="brand-version">0.3</span></button>
+      <button className="brand" aria-label="研序首页" onClick={()=>setTab('chat')}><span className="brand-mark"><Layers3 size={23}/></span><span>研序</span><span className="brand-version" title="当前运行的应用版本">{config.version?'v'+config.version:''}</span></button>
       <button className="new-research" aria-label="新建研究" onClick={()=>setShowNew(true)}><Plus size={17}/><span>新建研究</span></button>
       <nav aria-label="研究导航">{[[MessageSquare,'chat'],[BookOpen,'overview'],[SlidersHorizontal,'model'],[ShieldCheck,'audit'],[History,'history']].map(([Icon,id]:any)=><button key={id} aria-label={labels[id]} title={labels[id]} aria-current={tab===id?'page':undefined} className={tab===id?'active':''} onClick={()=>setTab(id)}><Icon size={18}/><span>{labels[id]}</span></button>)}</nav>
       <nav className="secondary-nav" aria-label="资料与设置">{[[FolderOpen,'library'],[Settings2,'settings'],[Trash2,'trash']].map(([Icon,id]:any)=><button key={id} aria-label={labels[id]} title={labels[id]} aria-current={tab===id?'page':undefined} className={tab===id?'active':''} onClick={()=>setTab(id)}><Icon size={18}/><span>{labels[id]}</span></button>)}</nav>
